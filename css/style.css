@@ -323,7 +323,7 @@ section{ padding: 110px 0; position: relative; }
 /* ============ Services ============ */
 .card-grid{
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 22px;
 }
 .service-card{
@@ -331,6 +331,8 @@ section{ padding: 110px 0; position: relative; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
   transition: transform .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
 }
 .service-card:hover{
@@ -349,6 +351,17 @@ section{ padding: 110px 0; position: relative; }
 }
 .service-card h3{ font-size: 1.15rem; margin-bottom: 10px; }
 .service-card p{ color: var(--text-dim); font-size: 0.94rem; }
+.card-link{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.card-link span{ transition: transform .25s var(--ease); }
+.card-link:hover span{ transform: translateX(3px); }
 
 /* ============ Process / timeline ============ */
 .process{ background: var(--bg-alt); }
