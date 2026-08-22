@@ -177,24 +177,52 @@
       <p class="section-label reveal">Selected work</p>
       <h2 class="section-title reveal">Systems in production</h2>
 
+      <div class="work-filters reveal" role="tablist">
+        <button class="work-filter active" data-filter="all">All</button>
+        <button class="work-filter" data-filter="ai">AI Platform</button>
+        <button class="work-filter" data-filter="fintech">Fintech</button>
+        <button class="work-filter" data-filter="healthcare">Healthcare</button>
+        <button class="work-filter" data-filter="retail">Retail</button>
+        <button class="work-filter" data-filter="logistics">Logistics</button>
+        <button class="work-filter" data-filter="manufacturing">Manufacturing</button>
+      </div>
+
       <div class="work-grid">
-        <article class="work-card reveal">
+        <article class="work-card reveal" data-category="ai">
           <div class="work-card-glow"></div>
           <span class="work-tag">AI Platform</span>
           <h3>Predictive Ops Engine</h3>
           <p>A forecasting engine for a logistics network, cutting delivery delays by 31%.</p>
         </article>
-        <article class="work-card reveal">
+        <article class="work-card reveal" data-category="fintech">
           <div class="work-card-glow"></div>
           <span class="work-tag">Fintech</span>
           <h3>Real-Time Ledger System</h3>
           <p>Event-driven core banking infrastructure processing 2M+ transactions daily.</p>
         </article>
-        <article class="work-card reveal">
+        <article class="work-card reveal" data-category="healthcare">
           <div class="work-card-glow"></div>
           <span class="work-tag">Healthcare</span>
           <h3>Clinical Data Fabric</h3>
           <p>Unified patient data platform connecting 40+ facilities under one secure layer.</p>
+        </article>
+        <article class="work-card reveal" data-category="retail">
+          <div class="work-card-glow"></div>
+          <span class="work-tag">Retail</span>
+          <h3>Smart Inventory Platform</h3>
+          <p>Demand forecasting and automated replenishment for a 200-store retail chain, cutting stockouts by 24%.</p>
+        </article>
+        <article class="work-card reveal" data-category="logistics">
+          <div class="work-card-glow"></div>
+          <span class="work-tag">Logistics</span>
+          <h3>Fleet Routing Engine</h3>
+          <p>Real-time route optimization for a regional delivery fleet, reducing fuel costs by 18%.</p>
+        </article>
+        <article class="work-card reveal" data-category="manufacturing">
+          <div class="work-card-glow"></div>
+          <span class="work-tag">Manufacturing</span>
+          <h3>Predictive Maintenance Suite</h3>
+          <p>An IoT sensor pipeline predicting equipment failures before they cause downtime across 12 production lines.</p>
         </article>
       </div>
     </div>
@@ -224,6 +252,71 @@
         <div class="orbit-ring ring-2"></div>
         <div class="orbit-ring ring-3"></div>
         <div class="orbit-core">SS</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <div class="container">
+      <p class="section-label reveal">Common questions</p>
+      <h2 class="section-title reveal">Frequently asked questions</h2>
+
+      <div class="faq-list">
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            How quickly can you start a project?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Most engagements kick off within one to two weeks of signing. We run a short discovery phase up front so the team starts with a clear scope instead of figuring it out mid-build.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            Do you work with early-stage startups, or only larger companies?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Both. We scope engagements to fit the team and budget in front of us — a startup's first production system looks different from an enterprise integration, and we plan for that up front.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            What does a fixed-scope engagement actually include?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>A defined set of deliverables, a timeline, and weekly working demos so you always know what's shipped and what's next — no open-ended hourly billing.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            Can you support an existing in-house engineering team, not just full builds?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Yes — a lot of our work is embedding alongside an existing team for a specific system, migration, or crunch period rather than owning the whole build.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            Is the phone/computer repair side connected to the consulting side?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Same company, separate teams. Repair is handled by certified technicians independent of the consulting engineers — see the <a href="repair.html" style="color:var(--accent); font-weight:600;">repair page</a> for pricing and turnaround.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            What happens after launch — do you offer ongoing support?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>We stay on to monitor, optimize and evolve the system as needed. The exact terms depend on the engagement and get scoped before launch, not after.</p>
+          </div>
+        </details>
       </div>
     </div>
   </section>
@@ -287,6 +380,7 @@
       <a href="mailto:hello@smartsolutions.io">hello@smartsolutions.io</a>
       <a href="#services">Services</a>
       <a href="#work">Work</a>
+      <a href="#faq">FAQ</a>
       <a href="#contact">Contact</a>
     </div>
     <p class="footer-copy">© <span id="year"></span> Smart Solutions. All rights reserved.</p>

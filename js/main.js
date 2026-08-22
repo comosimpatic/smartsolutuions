@@ -43,6 +43,21 @@
   );
   revealEls.forEach((el) => revealObserver.observe(el));
 
+  /* ---------- Work portfolio filter ---------- */
+  const workFilters = document.querySelectorAll('.work-filter');
+  const workCards = document.querySelectorAll('.work-card');
+  workFilters.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      workFilters.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.getAttribute('data-filter');
+      workCards.forEach((card) => {
+        const match = filter === 'all' || card.getAttribute('data-category') === filter;
+        card.classList.toggle('is-filtered-out', !match);
+      });
+    });
+  });
+
   /* ---------- Animated stat counters ---------- */
   const counters = document.querySelectorAll('[data-count]');
   const animateCounter = (el) => {
