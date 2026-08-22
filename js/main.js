@@ -89,6 +89,9 @@
   const LINK_DIST = 130;
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  const accentHex = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  const accentRGB = accentHex.replace('#', '').match(/.{1,2}/g).map((h) => parseInt(h, 16)).join(', ');
+
   function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
@@ -119,7 +122,7 @@
         const dx = a.x - b.x, dy = a.y - b.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < LINK_DIST) {
-          ctx.strokeStyle = `rgba(79, 227, 208, ${0.12 * (1 - dist / LINK_DIST)})`;
+          ctx.strokeStyle = `rgba(${accentRGB}, ${0.09 * (1 - dist / LINK_DIST)})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
@@ -132,7 +135,7 @@
     particles.forEach((p) => {
       ctx.beginPath();
       ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(79, 227, 208, 0.55)';
+      ctx.fillStyle = `rgba(${accentRGB}, 0.45)`;
       ctx.fill();
     });
 

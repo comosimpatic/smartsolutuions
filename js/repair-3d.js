@@ -15,15 +15,15 @@ async function init() {
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const ACCENT = 0x4fe3d0;
-  const ACCENT_2 = 0x8b7bff;
-  const ACCENT_3 = 0xff5fb0;
+  const ACCENT = 0x1d4ed8;
+  const ACCENT_2 = 0x0d9488;
+  const ACCENT_3 = 0xc2660c;
 
   let width = container.clientWidth || 1;
   let height = container.clientHeight || 1;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x060810, 0.05);
+  scene.fog = new THREE.FogExp2(0xeef2ff, 0.045);
 
   const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
   camera.position.set(0, 0.4, 6.6);
@@ -41,14 +41,14 @@ async function init() {
   container.appendChild(renderer.domElement);
 
   /* ---------- Lights ---------- */
-  scene.add(new THREE.AmbientLight(0x445566, 0.7));
-  const key = new THREE.DirectionalLight(0xffffff, 0.9);
+  scene.add(new THREE.AmbientLight(0xf5f7ff, 1.0));
+  const key = new THREE.DirectionalLight(0xffffff, 1.1);
   key.position.set(3, 5, 4);
   scene.add(key);
-  const glowCyan = new THREE.PointLight(ACCENT, 7, 14);
+  const glowCyan = new THREE.PointLight(ACCENT, 3.5, 14);
   glowCyan.position.set(-3, 1.2, 3);
   scene.add(glowCyan);
-  const glowPurple = new THREE.PointLight(ACCENT_2, 6, 14);
+  const glowPurple = new THREE.PointLight(ACCENT_2, 3, 14);
   glowPurple.position.set(3, -1, -2);
   scene.add(glowPurple);
 
@@ -116,7 +116,7 @@ async function init() {
 
   const circuitTex = makeCircuitTexture();
   const keyboardTex = makeKeyboardTexture();
-  const screenGlowTex = makeScreenGlowTexture('#4fe3d0', '#8b7bff');
+  const screenGlowTex = makeScreenGlowTexture('#1d4ed8', '#0d9488');
 
   /* ---------- Materials ---------- */
   const bodyMat = new THREE.MeshStandardMaterial({ color: 0x14161f, metalness: 0.65, roughness: 0.35 });
@@ -127,7 +127,7 @@ async function init() {
     color: 0x060810, roughness: 0.15, metalness: 0, transmission: 0.55, thickness: 0.4,
   });
   const boardMat = new THREE.MeshStandardMaterial({
-    color: 0x05100e, map: circuitTex, emissiveMap: circuitTex, emissive: 0x4fe3d0, emissiveIntensity: 0.55, roughness: 0.6,
+    color: 0x05100e, map: circuitTex, emissiveMap: circuitTex, emissive: 0x0d9488, emissiveIntensity: 0.35, roughness: 0.6,
   });
   const keyboardMat = new THREE.MeshStandardMaterial({ color: 0x1a1d2b, map: keyboardTex, roughness: 0.7 });
   const glowMat = new THREE.MeshBasicMaterial({ map: screenGlowTex, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
