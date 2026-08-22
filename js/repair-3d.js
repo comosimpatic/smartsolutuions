@@ -25,8 +25,8 @@ async function init() {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0xeef2ff, 0.045);
 
-  const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-  camera.position.set(0, 0.4, 6.6);
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+  camera.position.set(0, 0.4, 7.4);
   camera.lookAt(0, 0, 0);
 
   let renderer;
@@ -41,15 +41,15 @@ async function init() {
   container.appendChild(renderer.domElement);
 
   /* ---------- Lights ---------- */
-  scene.add(new THREE.AmbientLight(0xf5f7ff, 1.0));
-  const key = new THREE.DirectionalLight(0xffffff, 1.1);
+  scene.add(new THREE.AmbientLight(0xe4eaf7, 0.55));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9);
   key.position.set(3, 5, 4);
   scene.add(key);
-  const glowCyan = new THREE.PointLight(ACCENT, 3.5, 14);
-  glowCyan.position.set(-3, 1.2, 3);
+  const glowCyan = new THREE.PointLight(ACCENT, 4, 14);
+  glowCyan.position.set(-4.5, 1.4, 3.2);
   scene.add(glowCyan);
-  const glowPurple = new THREE.PointLight(ACCENT_2, 3, 14);
-  glowPurple.position.set(3, -1, -2);
+  const glowPurple = new THREE.PointLight(ACCENT_2, 3.5, 14);
+  glowPurple.position.set(4.5, -1.1, -2.2);
   scene.add(glowPurple);
 
   /* ---------- Texture helpers ---------- */
@@ -119,18 +119,18 @@ async function init() {
   const screenGlowTex = makeScreenGlowTexture('#1d4ed8', '#0d9488');
 
   /* ---------- Materials ---------- */
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x14161f, metalness: 0.65, roughness: 0.35 });
-  const darkMat = new THREE.MeshStandardMaterial({ color: 0x0f1119, metalness: 0.4, roughness: 0.5 });
-  const batteryMat = new THREE.MeshStandardMaterial({ color: 0x102420, metalness: 0.3, roughness: 0.5 });
+  const bodyMat = new THREE.MeshBasicMaterial({ color: 0x14161f });
+  const darkMat = new THREE.MeshBasicMaterial({ color: 0x0f1119 });
+  const batteryMat = new THREE.MeshBasicMaterial({ color: 0x102420 });
   const chipMat = new THREE.MeshStandardMaterial({ color: 0xd8b56a, metalness: 0.85, roughness: 0.3 });
   const glassMat = new THREE.MeshPhysicalMaterial({
-    color: 0x060810, roughness: 0.15, metalness: 0, transmission: 0.55, thickness: 0.4,
+    color: 0x060810, roughness: 0.15, metalness: 0, transmission: 0.22, thickness: 0.4,
   });
   const boardMat = new THREE.MeshStandardMaterial({
     color: 0x05100e, map: circuitTex, emissiveMap: circuitTex, emissive: 0x0d9488, emissiveIntensity: 0.35, roughness: 0.6,
   });
   const keyboardMat = new THREE.MeshStandardMaterial({ color: 0x1a1d2b, map: keyboardTex, roughness: 0.7 });
-  const glowMat = new THREE.MeshBasicMaterial({ map: screenGlowTex, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+  const glowMat = new THREE.MeshBasicMaterial({ map: screenGlowTex, transparent: true, opacity: 0.92 });
 
   /* ---------- Phone (exploded) ---------- */
   const phone = new THREE.Group();
@@ -169,7 +169,7 @@ async function init() {
   screenGlow.position.z = 0.315;
   phone.add(screenGlow);
 
-  phone.position.set(-1.35, 0.05, 0);
+  phone.position.set(-2.85, 0.05, 0);
   phone.rotation.set(0.12, 0.55, 0.04);
   scene.add(phone);
 
@@ -201,7 +201,7 @@ async function init() {
   lidGlow.position.set(0, 0.66, 0.007);
   screenPivot.add(lidGlow);
 
-  laptop.position.set(1.3, -0.25, 0.15);
+  laptop.position.set(3.15, -0.25, 0.15);
   laptop.rotation.set(0.04, -0.42, 0);
   scene.add(laptop);
 
@@ -252,16 +252,13 @@ async function init() {
   /* ---------- Pointer parallax ---------- */
   let targetTiltX = 0;
   let targetTiltY = 0;
-  container.addEventListener('pointermove', (e) => {
+  window.addEventListener('pointermove', (e) => {
     const rect = container.getBoundingClientRect();
+    if (e.clientY < rect.top || e.clientY > rect.bottom) return;
     const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
     targetTiltY = nx * 0.35;
     targetTiltX = ny * 0.18;
-  });
-  container.addEventListener('pointerleave', () => {
-    targetTiltX = 0;
-    targetTiltY = 0;
   });
 
   const rig = new THREE.Group();
