@@ -351,6 +351,18 @@ section{ padding: 110px 0; position: relative; }
 }
 .service-card h3{ font-size: 1.15rem; margin-bottom: 10px; }
 .service-card p{ color: var(--text-dim); font-size: 0.94rem; }
+.service-tag{
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: 16px;
+  padding: 4px 12px;
+  background: rgba(79,227,208,0.1);
+  color: var(--accent);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
 .card-link{
   display: inline-flex;
   align-items: center;
@@ -500,7 +512,8 @@ section{ padding: 110px 0; position: relative; }
 .form-field{ display: flex; flex-direction: column; gap: 8px; }
 .form-field label{ font-size: 0.85rem; color: var(--text-dim); }
 .form-field input,
-.form-field textarea{
+.form-field textarea,
+.form-field select{
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -511,8 +524,17 @@ section{ padding: 110px 0; position: relative; }
   resize: vertical;
   transition: border-color .2s, background .2s;
 }
+.form-field select{
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+  background-position: calc(100% - 20px) center, calc(100% - 15px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.form-field select option{ background: var(--bg-alt); color: var(--text); }
 .form-field input:focus,
-.form-field textarea:focus{
+.form-field textarea:focus,
+.form-field select:focus{
   outline: none;
   border-color: var(--accent);
   background: var(--surface-strong);
