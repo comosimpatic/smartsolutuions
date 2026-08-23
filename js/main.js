@@ -1,6 +1,8 @@
 (() => {
   'use strict';
 
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   /* ---------- Footer year ---------- */
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -58,6 +60,26 @@
     });
   });
 
+  /* ---------- Work card tilt + spotlight ---------- */
+  if (!prefersReducedMotion) {
+    workCards.forEach((card) => {
+      card.addEventListener('pointermove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mx', `${(x / rect.width) * 100}%`);
+        card.style.setProperty('--my', `${(y / rect.height) * 100}%`);
+
+        const nx = (x / rect.width) * 2 - 1;
+        const ny = (y / rect.height) * 2 - 1;
+        card.style.transform = `perspective(900px) rotateX(${(-ny * 4).toFixed(2)}deg) rotateY(${(nx * 4).toFixed(2)}deg) translateY(-4px)`;
+      });
+      card.addEventListener('pointerleave', () => {
+        card.style.transform = '';
+      });
+    });
+  }
+
   /* ---------- Animated stat counters ---------- */
   const counters = document.querySelectorAll('[data-count]');
   const animateCounter = (el) => {
@@ -102,7 +124,6 @@
   let width, height, particles;
   const PARTICLE_COUNT = 70;
   const LINK_DIST = 130;
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const accentHex = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
   const accentRGB = accentHex.replace('#', '').match(/.{1,2}/g).map((h) => parseInt(h, 16)).join(', ');

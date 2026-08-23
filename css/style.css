@@ -449,14 +449,33 @@ section{ padding: 110px 0; position: relative; }
   aspect-ratio: 21 / 6;
   padding: 22px 26px;
   transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+  transform-style: preserve-3d;
+  will-change: transform;
 }
-.work-card:hover{ transform: translateY(-4px); box-shadow: 0 24px 48px -20px rgba(16,22,43,0.28); }
-.work-grad-1{ background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
-.work-grad-2{ background: linear-gradient(135deg, var(--accent-2), var(--accent-3)); }
-.work-grad-3{ background: linear-gradient(135deg, var(--accent-3), var(--accent)); }
-.work-grad-4{ background: linear-gradient(140deg, var(--accent), var(--accent-3)); }
-.work-grad-5{ background: linear-gradient(140deg, var(--accent-2), var(--accent)); }
-.work-grad-6{ background: linear-gradient(140deg, var(--accent-3), var(--accent-2)); }
+.work-card:hover{ box-shadow: 0 24px 48px -20px rgba(16,22,43,0.28); }
+.work-card::before{
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle 280px at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.35), transparent 70%);
+  opacity: 0;
+  transition: opacity .35s var(--ease);
+  pointer-events: none;
+}
+.work-card:hover::before{ opacity: 1; }
+.work-grad-1{ background: linear-gradient(135deg, var(--accent), var(--accent-2)); background-size: 220% 220%; animation: work-drift 16s ease-in-out infinite alternate; }
+.work-grad-2{ background: linear-gradient(135deg, var(--accent-2), var(--accent-3)); background-size: 220% 220%; animation: work-drift 19s ease-in-out infinite alternate; }
+.work-grad-3{ background: linear-gradient(135deg, var(--accent-3), var(--accent)); background-size: 220% 220%; animation: work-drift 14s ease-in-out infinite alternate; }
+.work-grad-4{ background: linear-gradient(140deg, var(--accent), var(--accent-3)); background-size: 220% 220%; animation: work-drift 21s ease-in-out infinite alternate; }
+.work-grad-5{ background: linear-gradient(140deg, var(--accent-2), var(--accent)); background-size: 220% 220%; animation: work-drift 17s ease-in-out infinite alternate; }
+.work-grad-6{ background: linear-gradient(140deg, var(--accent-3), var(--accent-2)); background-size: 220% 220%; animation: work-drift 20s ease-in-out infinite alternate; }
+@keyframes work-drift{
+  0%{ background-position: 0% 30%; }
+  100%{ background-position: 100% 70%; }
+}
+@media (prefers-reduced-motion: reduce){
+  .work-grad-1, .work-grad-2, .work-grad-3, .work-grad-4, .work-grad-5, .work-grad-6{ animation: none; }
+}
 .work-scrim{
   position: absolute;
   inset: 0;
@@ -484,7 +503,20 @@ section{ padding: 110px 0; position: relative; }
   padding: 6px 13px;
   border-radius: 999px;
 }
-.work-chip-dot{ width: 6px; height: 6px; border-radius: 50%; background: #ffffff; }
+.work-chip-dot{
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: chip-pulse 2s infinite;
+}
+@keyframes chip-pulse{
+  0%{ box-shadow: 0 0 0 0 rgba(255,255,255,0.55); }
+  70%{ box-shadow: 0 0 0 7px rgba(255,255,255,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .work-chip-dot{ animation: none; }
+}
 .work-tags{ font-size: 0.72rem; color: rgba(255,255,255,0.82); text-align: right; }
 .work-card-bottom{
   position: relative;
@@ -505,6 +537,12 @@ section{ padding: 110px 0; position: relative; }
   display: flex; align-items: center; justify-content: center;
   color: #ffffff;
   font-size: 1.1rem;
+  transition: background .25s var(--ease), color .25s var(--ease), transform .25s var(--ease);
+}
+.work-card:hover .work-arrow{
+  background: #ffffff;
+  color: var(--accent);
+  transform: translateX(4px);
 }
 
 /* ============ About ============ */
