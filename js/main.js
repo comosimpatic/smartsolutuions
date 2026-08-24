@@ -182,9 +182,6 @@
     ).observe(canvas);
   }
 
-  document.querySelectorAll('.work-card-canvas').forEach((c) =>
-    initNodeNetworkCanvas(c, { nodeCount: 16, linkDistRatio: 0.16, lineRGB: '255,255,255', lineAlpha: 0.22, dotRGB: '255,255,255', dotAlpha: 0.6 })
-  );
   document.querySelectorAll('.service-card-canvas').forEach((c) =>
     initNodeNetworkCanvas(c, { nodeCount: 9, linkDistRatio: 0.34, lineRGB: accentRGB, lineAlpha: 0.14, dotRGB: accentRGB, dotAlpha: 0.3 })
   );

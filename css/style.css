@@ -230,6 +230,7 @@ button { font: inherit; cursor: pointer; }
 
 @media (prefers-reduced-motion: reduce){
   .hero-bg-video{ display: none; }
+  .work-card-video{ display: none; }
 }
 
 .eyebrow{
@@ -504,6 +505,13 @@ section{ padding: 110px 0; position: relative; }
   width: 100%;
   height: 100%;
   display: block;
+}
+.work-card-video{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .work-grad-1{ background: linear-gradient(135deg, var(--accent), var(--accent-2)); background-size: 220% 220%; animation: work-drift 16s ease-in-out infinite alternate; }
 .work-grad-2{ background: linear-gradient(135deg, var(--accent-2), var(--accent-3)); background-size: 220% 220%; animation: work-drift 19s ease-in-out infinite alternate; }
