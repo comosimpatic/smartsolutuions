@@ -10,6 +10,10 @@
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+  /* ---------- Hero background video speed ---------- */
+  const heroVideo = document.querySelector('.hero-bg-video');
+  if (heroVideo) heroVideo.playbackRate = 1.6;
+
   /* ---------- Header scroll state ---------- */
   const header = document.getElementById('site-header');
   const onScroll = () => {
