@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom App Development — Smart Solutions</title>
+<meta name="description" content="Mobile and web applications engineered from first sprint to production, with the infrastructure to scale past launch.">
+<link rel="icon" type="image/png" href="../assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/work-page.css">
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="grid-overlay"></div>
+
+<header class="site-header" id="site-header">
+  <div class="container header-inner">
+    <a href="../index.html#top" class="logo">
+      <img class="logo-mark" src="../assets/logo-mark.png" alt="Smart Solutions">
+      <span>Smart<em>Solutions</em></span>
+    </a>
+    <nav class="main-nav" id="main-nav">
+      <a href="../index.html#services">Services</a>
+      <a href="../index.html#process">Process</a>
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#contact" class="nav-cta">Start a Project</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="wp-hero">
+    <video class="wp-hero-video" src="../media/work-app-building.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
+    <div class="wp-hero-scrim"></div>
+    <div class="container wp-hero-inner">
+      <a href="../index.html#work" class="wp-back">← Back to work</a>
+      <span class="wp-chip"><span class="work-chip-dot"></span>App Building</span>
+      <h1>Custom App Development</h1>
+      <p class="wp-lead">Mobile and web applications engineered from first sprint to production, with the infrastructure to scale past launch.</p>
+      <div class="wp-hero-actions">
+        <a href="../index.html#contact" class="btn btn-primary">Start a Project <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="wp-body">
+    <div class="container wp-body-grid">
+      <div>
+        <h2>What's included</h2>
+        <ul class="wp-features">
+          <li>Native iOS &amp; Android, or cross-platform builds</li>
+          <li>Web application development with modern frameworks</li>
+          <li>API design and backend architecture</li>
+          <li>Ongoing support, monitoring and iteration post-launch</li>
+        </ul>
+
+      </div>
+      <aside class="wp-aside">
+        <h3>How we get there</h3>
+        <ol class="wp-steps">
+          <li>Discovery &amp; scoping</li>
+          <li>Design &amp; build</li>
+          <li>Launch &amp; support</li>
+        </ol>
+      </aside>
+    </div>
+  </section>
+
+  <section class="wp-cta">
+    <div class="container">
+      <h2>Ready to talk app building?</h2>
+      <p>Tell us where things stand today and we'll map out what a production-ready version of this looks like for your business.</p>
+      <a href="../index.html#contact" class="btn btn-primary">Start a Project <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <a href="../index.html#top" class="logo">
+      <img class="logo-mark" src="../assets/logo-mark.png" alt="Smart Solutions">
+      <span>Smart<em>Solutions</em></span>
+    </a>
+    <div class="footer-links">
+      <a href="mailto:hello@smartsolutions.io">hello@smartsolutions.io</a>
+      <a href="../index.html#services">Services</a>
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#faq">FAQ</a>
+      <a href="../index.html#contact">Contact</a>
+    </div>
+    <p class="footer-copy">© <span id="year"></span> Smart Solutions. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="../js/main.js"></script>
+</body>
+</html>
