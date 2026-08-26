@@ -16,7 +16,7 @@
     return `
       <article class="tp-card" data-id="${p.id}">
         <div class="tp-card-media">
-          ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name)}" loading="lazy">` : (p.icon || '📦')}
+          ${p.image_src ? `<img src="${escapeHtml(p.image_src)}" alt="${escapeHtml(p.name)}" loading="lazy">` : (p.icon || '📦')}
         </div>
         <span class="tp-card-condition${conditionClass}">${escapeHtml(p.condition)}</span>
         <h3>${escapeHtml(p.name)}</h3>

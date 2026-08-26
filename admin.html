@@ -23,7 +23,7 @@
         <span>Smart<em>Solutions</em></span>
       </div>
       <h1>Tech Store admin</h1>
-      <p>Sign in to manage products and pricing.</p>
+      <p>Sign in to manage the store.</p>
       <form id="login-form">
         <div class="admin-field">
           <label for="login-password">Password</label>
@@ -41,20 +41,93 @@
         <img class="logo-mark" src="assets/logo-mark.png" alt="Smart Solutions">
         <span>Smart<em>Solutions</em></span>
       </div>
-      <button class="admin-logout" id="logout-btn">Log out</button>
+      <div class="admin-header-right">
+        <span class="admin-role-badge" id="role-badge"></span>
+        <button class="admin-logout" id="logout-btn">Log out</button>
+      </div>
     </header>
 
     <main class="admin-main">
-      <h1>Tech Store overview</h1>
+      <h1 id="dashboard-title">Tech Store</h1>
 
-      <div class="admin-stats" id="stats-row"></div>
-
-      <div class="admin-tabs">
-        <button type="button" class="admin-tab active" id="tab-products">Products</button>
-        <button type="button" class="admin-tab" id="tab-orders">Orders</button>
+      <div class="admin-tabs" id="admin-tabs">
+        <button type="button" class="admin-tab" id="tab-sale">Record a sale</button>
+        <button type="button" class="admin-tab" id="tab-overview" data-owner-only>Overview</button>
+        <button type="button" class="admin-tab" id="tab-products" data-owner-only>Products</button>
       </div>
 
-      <div id="products-panel">
+      <!-- ============ Record a sale (owner + staff) ============ -->
+      <div id="sale-panel">
+        <div class="admin-section-head"><h2>Record an in-store sale</h2></div>
+        <div class="admin-form-card">
+          <form id="sale-form">
+            <div class="admin-form-grid">
+              <div class="admin-field">
+                <label for="sale-customer-name">Customer name (optional)</label>
+                <input type="text" id="sale-customer-name">
+              </div>
+              <div class="admin-field">
+                <label for="sale-customer-email">Customer email (optional)</label>
+                <input type="email" id="sale-customer-email">
+              </div>
+              <div class="admin-field">
+                <label for="sale-customer-phone">Customer phone (optional)</label>
+                <input type="tel" id="sale-customer-phone">
+              </div>
+              <div class="admin-field">
+                <label for="sale-payment-method">Payment method</label>
+                <select id="sale-payment-method">
+                  <option value="cash">Cash</option>
+                  <option value="card">Card (in-store terminal)</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="sale-lines" id="sale-lines"></div>
+            <button type="button" class="btn btn-ghost" id="sale-add-line">+ Add line item</button>
+
+            <div class="sale-total-row">
+              <span>Total</span>
+              <strong id="sale-total">$0.00</strong>
+            </div>
+
+            <div style="display:flex; gap:12px; align-items:center; margin-top:16px;">
+              <button type="submit" class="btn btn-primary" id="sale-submit-btn">Complete sale &amp; print receipt</button>
+              <p class="admin-toast" id="sale-toast"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ============ Overview (owner only) ============ -->
+      <div id="overview-panel" hidden>
+        <div class="admin-stats" id="stats-row"></div>
+
+        <div class="admin-section-head">
+          <h2>All orders</h2>
+          <input type="search" id="order-search" placeholder="Search by customer name or email…" class="admin-search">
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Channel</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Fulfillment</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="order-rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ============ Products (owner only) ============ -->
+      <div id="products-panel" hidden>
         <div class="admin-section-head">
           <h2>Products</h2>
         </div>
@@ -62,7 +135,7 @@
           <table class="admin-table">
             <thead>
               <tr>
-                <th>Icon</th>
+                <th>Image</th>
                 <th>Name</th>
                 <th>Category</th>
                 <th>Specs</th>
@@ -119,7 +192,15 @@
                 <input type="text" id="field-icon" maxlength="4" placeholder="📱">
               </div>
               <div class="admin-field span-2">
-                <label for="field-image">Image URL</label>
+                <label for="field-image-file">Product photo</label>
+                <input type="file" id="field-image-file" accept="image/*">
+                <div class="admin-image-preview" id="field-image-preview" hidden>
+                  <img id="field-image-preview-img" alt="Current product image">
+                  <label><input type="checkbox" id="field-image-remove"> Remove current photo</label>
+                </div>
+              </div>
+              <div class="admin-field span-2">
+                <label for="field-image">Or an image URL (used if no photo is uploaded)</label>
                 <input type="text" id="field-image" placeholder="Leave blank to use the category placeholder">
               </div>
             </div>
@@ -129,27 +210,6 @@
               <p class="admin-toast" id="form-toast"></p>
             </div>
           </form>
-        </div>
-      </div>
-
-      <div id="orders-panel" hidden>
-        <div class="admin-section-head">
-          <h2>Orders</h2>
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Fulfillment</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="order-rows"></tbody>
-          </table>
         </div>
       </div>
     </main>

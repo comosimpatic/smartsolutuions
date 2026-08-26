@@ -1,15 +1,19 @@
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const multer = require('multer');
 const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || null;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || null; // owner login — full access
+const STAFF_PASSWORD = process.env.STAFF_PASSWORD || null; // staff login — record sales only
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const SESSION_COOKIE = 'ss_admin';
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024 } });
 
 const pool = process.env.DATABASE_URL
   ? new Pool({
@@ -25,6 +29,18 @@ const CATEGORY_IMAGE = {
   laptops: '/assets/products/laptop.svg',
   parts: '/assets/products/parts.svg',
 };
+
+const PRODUCT_COLUMNS = `
+  id, category, name, specs, price_cents, condition, icon, image_url, stock,
+  created_at, updated_at, (image_data IS NOT NULL) AS has_image
+`;
+
+function withImageSrc(row) {
+  return {
+    ...row,
+    image_src: row.has_image ? `/api/products/${row.id}/image` : (row.image_url || CATEGORY_IMAGE[row.category] || null),
+  };
+}
 
 const SEED_PRODUCTS = [
   ['phones', 'Flagship 6.7" 5G Smartphone', '256GB storage · Triple camera system · All-day battery', 89900, 'New', '📱'],
@@ -63,6 +79,8 @@ async function initDb() {
   `);
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT`);
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 25`);
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_data BYTEA`);
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_mime TEXT`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS orders (
@@ -77,6 +95,10 @@ async function initDb() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS channel TEXT NOT NULL DEFAULT 'online'`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_phone TEXT`);
+  await pool.query(`UPDATE orders SET payment_method = 'stripe' WHERE payment_method IS NULL`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS order_items (
       id SERIAL PRIMARY KEY,
@@ -120,28 +142,41 @@ function parseCookies(req) {
   return out;
 }
 
-function signSession(expiresAt) {
-  const payload = String(expiresAt);
+function signSession(expiresAt, role) {
+  const payload = `${expiresAt}:${role}`;
   const sig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
   return `${payload}.${sig}`;
 }
 
 function verifySession(token) {
-  if (!token) return false;
-  const [payload, sig] = token.split('.');
-  if (!payload || !sig) return false;
+  if (!token) return null;
+  const sepIdx = token.lastIndexOf('.');
+  if (sepIdx === -1) return null;
+  const payload = token.slice(0, sepIdx);
+  const sig = token.slice(sepIdx + 1);
   const expected = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
   const sigBuf = Buffer.from(sig);
   const expBuf = Buffer.from(expected);
-  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return false;
-  return Number(payload) > Date.now();
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null;
+  const [expiresAtStr, role] = payload.split(':');
+  if (!(Number(expiresAtStr) > Date.now())) return null;
+  return { role: role === 'owner' ? 'owner' : 'staff' };
 }
 
 function requireAdmin(req, res, next) {
   const cookies = parseCookies(req);
-  if (!verifySession(cookies[SESSION_COOKIE])) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+  const session = verifySession(cookies[SESSION_COOKIE]);
+  if (!session) return res.status(401).json({ error: 'Not authenticated' });
+  req.role = session.role;
+  next();
+}
+
+function requireOwner(req, res, next) {
+  const cookies = parseCookies(req);
+  const session = verifySession(cookies[SESSION_COOKIE]);
+  if (!session) return res.status(401).json({ error: 'Not authenticated' });
+  if (session.role !== 'owner') return res.status(403).json({ error: 'Owner access only' });
+  req.role = session.role;
   next();
 }
 
@@ -157,8 +192,17 @@ function requireStripe(req, res, next) {
 
 /* ---------- Public API ---------- */
 app.get('/api/products', requireDb, async (req, res) => {
-  const { rows } = await pool.query('SELECT * FROM products ORDER BY category, id');
-  res.json(rows);
+  const { rows } = await pool.query(`SELECT ${PRODUCT_COLUMNS} FROM products ORDER BY category, id`);
+  res.json(rows.map(withImageSrc));
+});
+
+app.get('/api/products/:id/image', requireDb, async (req, res) => {
+  const { rows } = await pool.query('SELECT image_data, image_mime FROM products WHERE id = $1', [req.params.id]);
+  const row = rows[0];
+  if (!row || !row.image_data) return res.status(404).end();
+  res.setHeader('Content-Type', row.image_mime || 'image/jpeg');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.end(row.image_data);
 });
 
 /* ---------- Checkout (Stripe) ---------- */
@@ -167,7 +211,7 @@ app.post('/api/checkout', requireDb, requireStripe, async (req, res) => {
   if (!items.length) return res.status(400).json({ error: 'Cart is empty' });
 
   const ids = items.map((i) => Number(i.id)).filter(Number.isFinite);
-  const { rows: products } = await pool.query('SELECT * FROM products WHERE id = ANY($1)', [ids]);
+  const { rows: products } = await pool.query('SELECT id, name, specs, price_cents, stock FROM products WHERE id = ANY($1)', [ids]);
   const byId = Object.fromEntries(products.map((p) => [p.id, p]));
 
   const lineItems = [];
@@ -221,13 +265,14 @@ app.get('/api/checkout/confirm', requireDb, requireStripe, async (req, res) => {
   const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, { expand: ['data.price.product'], limit: 100 });
 
   const orderRes = await pool.query(
-    `INSERT INTO orders (stripe_session_id, customer_email, customer_name, shipping_address, status, total_cents)
-     VALUES ($1,$2,$3,$4,'paid',$5)
+    `INSERT INTO orders (stripe_session_id, customer_email, customer_name, customer_phone, shipping_address, status, total_cents, channel, payment_method)
+     VALUES ($1,$2,$3,$4,$5,'paid',$6,'online','stripe')
      ON CONFLICT (stripe_session_id) DO NOTHING RETURNING *`,
     [
       sessionId,
       session.customer_details?.email || null,
       session.customer_details?.name || null,
+      session.customer_details?.phone || null,
       JSON.stringify(session.shipping_details?.address || session.customer_details?.address || null),
       session.amount_total || 0,
     ]
@@ -258,20 +303,27 @@ app.get('/api/checkout/confirm', requireDb, requireStripe, async (req, res) => {
 });
 
 /* ---------- Admin auth ---------- */
+function matchesPassword(candidate, expected) {
+  if (!expected) return false;
+  const candBuf = Buffer.from(String(candidate || ''));
+  const expBuf = Buffer.from(expected);
+  return candBuf.length === expBuf.length && crypto.timingSafeEqual(candBuf, expBuf);
+}
+
 app.post('/api/admin/login', (req, res) => {
-  if (!ADMIN_PASSWORD) {
+  if (!ADMIN_PASSWORD && !STAFF_PASSWORD) {
     return res.status(503).json({ error: 'Admin password is not configured yet.' });
   }
   const { password } = req.body || {};
-  const pwBuf = Buffer.from(String(password || ''));
-  const expBuf = Buffer.from(ADMIN_PASSWORD);
-  const match = pwBuf.length === expBuf.length && crypto.timingSafeEqual(pwBuf, expBuf);
-  if (!match) return res.status(401).json({ error: 'Incorrect password' });
+  let role = null;
+  if (matchesPassword(password, ADMIN_PASSWORD)) role = 'owner';
+  else if (matchesPassword(password, STAFF_PASSWORD)) role = 'staff';
+  if (!role) return res.status(401).json({ error: 'Incorrect password' });
 
   const expiresAt = Date.now() + SESSION_MAX_AGE_MS;
-  const token = signSession(expiresAt);
+  const token = signSession(expiresAt, role);
   res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${Math.floor(SESSION_MAX_AGE_MS / 1000)}; SameSite=Strict`);
-  res.json({ ok: true });
+  res.json({ ok: true, role });
 });
 
 app.post('/api/admin/logout', (req, res) => {
@@ -281,61 +333,88 @@ app.post('/api/admin/logout', (req, res) => {
 
 app.get('/api/admin/session', (req, res) => {
   const cookies = parseCookies(req);
-  res.json({ loggedIn: verifySession(cookies[SESSION_COOKIE]) });
+  const session = verifySession(cookies[SESSION_COOKIE]);
+  res.json({ loggedIn: !!session, role: session?.role || null });
 });
 
-/* ---------- Admin API (protected) ---------- */
-app.get('/api/admin/overview', requireAdmin, requireDb, async (req, res) => {
+/* ---------- Admin API — owner only: full overview & catalog management ---------- */
+app.get('/api/admin/overview', requireOwner, requireDb, async (req, res) => {
   const totalRes = await pool.query('SELECT COUNT(*)::int AS count FROM products');
   const byCategoryRes = await pool.query('SELECT category, COUNT(*)::int AS count FROM products GROUP BY category ORDER BY category');
   const lastUpdatedRes = await pool.query('SELECT MAX(updated_at) AS updated_at FROM products');
+  const salesRes = await pool.query(`
+    SELECT COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS order_count
+    FROM orders WHERE created_at >= now() - interval '30 days'
+  `);
   res.json({
     totalProducts: totalRes.rows[0].count,
     byCategory: byCategoryRes.rows,
     lastUpdated: lastUpdatedRes.rows[0].updated_at,
+    revenue30dCents: salesRes.rows[0].revenue_cents,
+    orders30d: salesRes.rows[0].order_count,
   });
 });
 
 app.get('/api/admin/products', requireAdmin, requireDb, async (req, res) => {
-  const { rows } = await pool.query('SELECT * FROM products ORDER BY category, id');
-  res.json(rows);
+  const { rows } = await pool.query(`SELECT ${PRODUCT_COLUMNS} FROM products ORDER BY category, id`);
+  res.json(rows.map(withImageSrc));
 });
 
-app.post('/api/admin/products', requireAdmin, requireDb, async (req, res) => {
-  const { category, name, specs, price_cents, condition, icon, image_url, stock } = req.body || {};
+app.post('/api/admin/products', requireOwner, requireDb, upload.single('image'), async (req, res) => {
+  const { category, name, specs, condition, icon, image_url } = req.body || {};
+  const price_cents = Math.round(parseFloat(req.body?.price_cents));
+  const stock = req.body?.stock ? Math.round(parseFloat(req.body.stock)) : 25;
   if (!category || !name || !Number.isFinite(price_cents)) {
     return res.status(400).json({ error: 'category, name and price_cents are required' });
   }
   const { rows } = await pool.query(
-    'INSERT INTO products (category, name, specs, price_cents, condition, icon, image_url, stock) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',
-    [category, name, specs || '', Math.round(price_cents), condition || 'New', icon || '📦', image_url || CATEGORY_IMAGE[category] || null, Number.isFinite(stock) ? Math.round(stock) : 25]
+    `INSERT INTO products (category, name, specs, price_cents, condition, icon, image_url, stock, image_data, image_mime)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING ${PRODUCT_COLUMNS}`,
+    [
+      category, name, specs || '', price_cents, condition || 'New', icon || '📦',
+      image_url || CATEGORY_IMAGE[category] || null, stock,
+      req.file ? req.file.buffer : null, req.file ? req.file.mimetype : null,
+    ]
   );
-  res.status(201).json(rows[0]);
+  res.status(201).json(withImageSrc(rows[0]));
 });
 
-app.put('/api/admin/products/:id', requireAdmin, requireDb, async (req, res) => {
+app.put('/api/admin/products/:id', requireOwner, requireDb, upload.single('image'), async (req, res) => {
   const { id } = req.params;
-  const { category, name, specs, price_cents, condition, icon, image_url, stock } = req.body || {};
+  const { category, name, specs, condition, icon, image_url } = req.body || {};
+  const price_cents = Math.round(parseFloat(req.body?.price_cents));
+  const stock = req.body?.stock ? Math.round(parseFloat(req.body.stock)) : 25;
   if (!category || !name || !Number.isFinite(price_cents)) {
     return res.status(400).json({ error: 'category, name and price_cents are required' });
   }
+
+  const params = [category, name, specs || '', price_cents, condition || 'New', icon || '📦', image_url || CATEGORY_IMAGE[category] || null, stock];
+  let imageClause = '';
+  if (req.file) {
+    imageClause = `, image_data = $${params.length + 1}, image_mime = $${params.length + 2}`;
+    params.push(req.file.buffer, req.file.mimetype);
+  } else if (req.body?.remove_image === 'true') {
+    imageClause = ', image_data = NULL, image_mime = NULL';
+  }
+  params.push(id);
+
   const { rows } = await pool.query(
-    `UPDATE products SET category=$1, name=$2, specs=$3, price_cents=$4, condition=$5, icon=$6, image_url=$7, stock=$8, updated_at=now()
-     WHERE id=$9 RETURNING *`,
-    [category, name, specs || '', Math.round(price_cents), condition || 'New', icon || '📦', image_url || CATEGORY_IMAGE[category] || null, Number.isFinite(stock) ? Math.round(stock) : 25, id]
+    `UPDATE products SET category=$1, name=$2, specs=$3, price_cents=$4, condition=$5, icon=$6, image_url=$7, stock=$8, updated_at=now()${imageClause}
+     WHERE id = $${params.length} RETURNING ${PRODUCT_COLUMNS}`,
+    params
   );
   if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-  res.json(rows[0]);
+  res.json(withImageSrc(rows[0]));
 });
 
-app.delete('/api/admin/products/:id', requireAdmin, requireDb, async (req, res) => {
+app.delete('/api/admin/products/:id', requireOwner, requireDb, async (req, res) => {
   const { id } = req.params;
   const { rowCount } = await pool.query('DELETE FROM products WHERE id=$1', [id]);
   if (!rowCount) return res.status(404).json({ error: 'Not found' });
   res.status(204).end();
 });
 
-app.get('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
+app.get('/api/admin/orders', requireOwner, requireDb, async (req, res) => {
   const { rows: orders } = await pool.query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200');
   const { rows: items } = await pool.query(
     'SELECT * FROM order_items WHERE order_id = ANY($1)',
@@ -348,7 +427,7 @@ app.get('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
   res.json(orders.map((o) => ({ ...o, items: itemsByOrder[o.id] || [] })));
 });
 
-app.put('/api/admin/orders/:id/fulfillment', requireAdmin, requireDb, async (req, res) => {
+app.put('/api/admin/orders/:id/fulfillment', requireOwner, requireDb, async (req, res) => {
   const { id } = req.params;
   const status = req.body?.fulfillment_status === 'fulfilled' ? 'fulfilled' : 'unfulfilled';
   const { rows } = await pool.query(
@@ -357,6 +436,57 @@ app.put('/api/admin/orders/:id/fulfillment', requireAdmin, requireDb, async (req
   );
   if (!rows[0]) return res.status(404).json({ error: 'Not found' });
   res.json(rows[0]);
+});
+
+/* ---------- Admin API — any logged-in staff: record in-store sales ---------- */
+app.get('/api/admin/orders/:id', requireAdmin, requireDb, async (req, res) => {
+  const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+  const items = await pool.query('SELECT name, price_cents, quantity FROM order_items WHERE order_id = $1', [req.params.id]);
+  res.json({ order: rows[0], items: items.rows });
+});
+
+app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
+  const { customer_name, customer_email, customer_phone, payment_method, items } = req.body || {};
+  if (!Array.isArray(items) || !items.length) {
+    return res.status(400).json({ error: 'At least one line item is required' });
+  }
+
+  const cleanItems = [];
+  let total = 0;
+  for (const item of items) {
+    const name = String(item.name || '').trim();
+    const price_cents = Math.round(Number(item.price_cents));
+    const quantity = Math.max(1, Math.round(Number(item.quantity) || 1));
+    if (!name || !Number.isFinite(price_cents) || price_cents < 0) {
+      return res.status(400).json({ error: 'Each line item needs a name and a valid price' });
+    }
+    total += price_cents * quantity;
+    const productId = Number.isFinite(Number(item.product_id)) ? Number(item.product_id) : null;
+    cleanItems.push({ productId, name, price_cents, quantity });
+  }
+
+  const syntheticSessionId = `instore-${crypto.randomUUID()}`;
+  const orderRes = await pool.query(
+    `INSERT INTO orders (stripe_session_id, customer_email, customer_name, customer_phone, status, fulfillment_status, total_cents, channel, payment_method)
+     VALUES ($1,$2,$3,$4,'paid','fulfilled',$5,'in_store',$6) RETURNING *`,
+    [syntheticSessionId, customer_email || null, customer_name || null, customer_phone || null, total, payment_method || 'cash']
+  );
+  const order = orderRes.rows[0];
+
+  const itemRows = [];
+  for (const it of cleanItems) {
+    await pool.query(
+      'INSERT INTO order_items (order_id, product_id, name, price_cents, quantity) VALUES ($1,$2,$3,$4,$5)',
+      [order.id, it.productId, it.name, it.price_cents, it.quantity]
+    );
+    itemRows.push({ name: it.name, price_cents: it.price_cents, quantity: it.quantity });
+    if (it.productId) {
+      await pool.query('UPDATE products SET stock = GREATEST(stock - $1, 0) WHERE id = $2', [it.quantity, it.productId]);
+    }
+  }
+
+  res.status(201).json({ order, items: itemRows });
 });
 
 app.get('/admin', (req, res) => {

@@ -1,0 +1,79 @@
+body{ background: var(--bg-alt); }
+
+.receipt-toolbar{
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.receipt-toolbar a{ font-size: 0.88rem; font-weight: 600; color: var(--text-dim); }
+.receipt-toolbar button{
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.receipt-sheet{
+  max-width: 640px;
+  margin: 24px auto 80px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 40px;
+}
+.receipt-loading, .receipt-error{ color: var(--text-faint); text-align: center; padding: 40px 0; }
+.receipt-error{ color: #c0392b; }
+
+.receipt-head{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.receipt-logo{ width: 44px; height: 44px; }
+.receipt-head h1{ font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; }
+.receipt-head h1 em{ color: var(--accent); font-style: normal; }
+.receipt-head p{ font-size: 0.82rem; color: var(--text-faint); }
+
+.receipt-meta{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.receipt-meta div{ display: flex; flex-direction: column; gap: 4px; }
+.receipt-meta span{ font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); }
+.receipt-meta strong{ font-size: 0.9rem; }
+
+.receipt-customer{
+  padding: 14px 16px;
+  background: var(--surface-strong);
+  border-radius: 10px;
+  margin-bottom: 22px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.receipt-customer span{ display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); margin-bottom: 4px; }
+
+.receipt-table{ width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 20px; }
+.receipt-table th, .receipt-table td{ padding: 10px 4px; text-align: left; border-bottom: 1px solid var(--border); }
+.receipt-table th{ font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-faint); }
+.receipt-table .num{ text-align: right; }
+.receipt-table tfoot td{ border-bottom: none; border-top: 2px solid var(--text); font-weight: 700; padding-top: 14px; }
+
+.receipt-thanks{ text-align: center; color: var(--text-faint); font-size: 0.85rem; }
+
+@media print{
+  .no-print{ display: none !important; }
+  body{ background: #fff; }
+  .receipt-sheet{ margin: 0; border: none; box-shadow: none; max-width: 100%; }
+}

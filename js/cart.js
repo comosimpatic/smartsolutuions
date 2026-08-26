@@ -110,7 +110,7 @@
       subtotal += p.price_cents * qty;
       return `
         <div class="cart-line" data-id="${id}">
-          <img src="${escapeHtml(p.image_url || '')}" alt="" class="cart-line-img">
+          <img src="${escapeHtml(p.image_src || '')}" alt="" class="cart-line-img">
           <div class="cart-line-info">
             <p class="cart-line-name">${escapeHtml(p.name)}</p>
             <p class="cart-line-price">${money(p.price_cents)}</p>
