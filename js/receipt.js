@@ -4,9 +4,12 @@
   const money = (cents) => `$${(cents / 100).toFixed(2)}`;
 
   function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str == null ? '' : String(str);
-    return div.innerHTML;
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   const PAYMENT_LABELS = { cash: 'Cash', card: 'Card', other: 'Other', stripe: 'Card (online)' };
