@@ -83,9 +83,40 @@
     loginView.hidden = true;
     dashboardView.hidden = false;
     roleBadge.textContent = role === 'owner' ? 'Owner' : 'Staff';
+    ownerElevateLink.hidden = role === 'owner';
     document.querySelectorAll('[data-owner-only]').forEach((el) => { el.hidden = role !== 'owner'; });
     activateTab(role === 'owner' ? 'overview' : 'sale');
   }
+
+  /* ============ Owner sign-in (second layer) ============ */
+  const ownerElevateLink = document.getElementById('owner-elevate-link');
+  const ownerElevateOverlay = document.getElementById('owner-elevate-overlay');
+  const ownerElevateForm = document.getElementById('owner-elevate-form');
+  const ownerElevateError = document.getElementById('owner-elevate-error');
+  const ownerElevatePassword = document.getElementById('owner-elevate-password');
+
+  ownerElevateLink.addEventListener('click', () => {
+    ownerElevateError.textContent = '';
+    ownerElevateOverlay.hidden = false;
+    ownerElevatePassword.focus();
+  });
+  document.getElementById('owner-elevate-cancel').addEventListener('click', () => {
+    ownerElevateOverlay.hidden = true;
+    ownerElevateForm.reset();
+    ownerElevateError.textContent = '';
+  });
+  ownerElevateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    ownerElevateError.textContent = '';
+    try {
+      const data = await api('/api/admin/elevate', { method: 'POST', body: JSON.stringify({ password: ownerElevatePassword.value }) });
+      ownerElevateOverlay.hidden = true;
+      ownerElevateForm.reset();
+      showDashboard(data.role);
+    } catch (err) {
+      ownerElevateError.textContent = err.message;
+    }
+  });
 
   async function checkSession() {
     try {

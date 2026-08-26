@@ -23,7 +23,7 @@
         <span>Smart<em>Solutions</em></span>
       </div>
       <h1>Tech Store admin</h1>
-      <p>Sign in to manage the store.</p>
+      <p>Staff sign-in — record sales here.</p>
       <form id="login-form">
         <div class="admin-field">
           <label for="login-password">Password</label>
@@ -43,9 +43,23 @@
       </div>
       <div class="admin-header-right">
         <span class="admin-role-badge" id="role-badge"></span>
+        <button type="button" class="admin-owner-link" id="owner-elevate-link">Owner sign-in</button>
         <button class="admin-logout" id="logout-btn">Log out</button>
       </div>
     </header>
+
+    <div class="owner-elevate-overlay" id="owner-elevate-overlay" hidden>
+      <form class="owner-elevate-card" id="owner-elevate-form">
+        <h3>Owner sign-in</h3>
+        <p>Enter the owner password to unlock Overview and Products.</p>
+        <input type="password" id="owner-elevate-password" autocomplete="off" required>
+        <p class="admin-error" id="owner-elevate-error"></p>
+        <div class="owner-elevate-actions">
+          <button type="submit" class="btn btn-primary">Unlock</button>
+          <button type="button" class="btn btn-ghost" id="owner-elevate-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
 
     <main class="admin-main">
       <h1 id="dashboard-title">Tech Store</h1>

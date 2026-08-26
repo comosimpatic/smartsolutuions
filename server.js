@@ -7,8 +7,8 @@ const { Pool } = require('pg');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || null; // owner login — full access
-const STAFF_PASSWORD = process.env.STAFF_PASSWORD || null; // staff login — record sales only
+const STAFF_PASSWORD = process.env.STAFF_PASSWORD || null; // first-layer login — record sales only
+const OWNER_PASSWORD = process.env.OWNER_PASSWORD || null; // second-layer login — unlocks Overview + Products
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const SESSION_COOKIE = 'ss_admin';
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -311,19 +311,34 @@ function matchesPassword(candidate, expected) {
 }
 
 app.post('/api/admin/login', (req, res) => {
-  if (!ADMIN_PASSWORD && !STAFF_PASSWORD) {
-    return res.status(503).json({ error: 'Admin password is not configured yet.' });
+  if (!STAFF_PASSWORD) {
+    return res.status(503).json({ error: 'Staff password is not configured yet.' });
   }
   const { password } = req.body || {};
-  let role = null;
-  if (matchesPassword(password, ADMIN_PASSWORD)) role = 'owner';
-  else if (matchesPassword(password, STAFF_PASSWORD)) role = 'staff';
-  if (!role) return res.status(401).json({ error: 'Incorrect password' });
+  if (!matchesPassword(password, STAFF_PASSWORD)) {
+    return res.status(401).json({ error: 'Incorrect password' });
+  }
 
   const expiresAt = Date.now() + SESSION_MAX_AGE_MS;
-  const token = signSession(expiresAt, role);
+  const token = signSession(expiresAt, 'staff');
   res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${Math.floor(SESSION_MAX_AGE_MS / 1000)}; SameSite=Strict`);
-  res.json({ ok: true, role });
+  res.json({ ok: true, role: 'staff' });
+});
+
+// Second-layer login: escalates an already-logged-in session to owner.
+app.post('/api/admin/elevate', requireAdmin, (req, res) => {
+  if (!OWNER_PASSWORD) {
+    return res.status(503).json({ error: 'Owner password is not configured yet.' });
+  }
+  const { password } = req.body || {};
+  if (!matchesPassword(password, OWNER_PASSWORD)) {
+    return res.status(401).json({ error: 'Incorrect password' });
+  }
+
+  const expiresAt = Date.now() + SESSION_MAX_AGE_MS;
+  const token = signSession(expiresAt, 'owner');
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${Math.floor(SESSION_MAX_AGE_MS / 1000)}; SameSite=Strict`);
+  res.json({ ok: true, role: 'owner' });
 });
 
 app.post('/api/admin/logout', (req, res) => {

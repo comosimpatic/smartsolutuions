@@ -68,6 +68,50 @@ body{ background: var(--bg); }
   background: var(--surface-strong);
   color: var(--accent);
 }
+.admin-owner-link{
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.admin-owner-link:hover{ background: var(--surface-strong); }
+
+.owner-elevate-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(10,14,28,0.45);
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.owner-elevate-card{
+  width: 100%;
+  max-width: 340px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 26px;
+  box-shadow: 0 24px 48px -32px rgba(16,22,43,0.4);
+}
+.owner-elevate-card h3{ font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; margin-bottom: 6px; }
+.owner-elevate-card p{ font-size: 0.85rem; color: var(--text-faint); margin-bottom: 16px; }
+.owner-elevate-card input{
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font: inherit;
+  margin-bottom: 8px;
+}
+.owner-elevate-actions{ display: flex; gap: 10px; margin-top: 8px; }
+
 .admin-logout{
   font-size: 0.85rem;
   font-weight: 600;
