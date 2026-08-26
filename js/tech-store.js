@@ -11,15 +11,23 @@
 
   function cardHtml(p) {
     const conditionClass = p.condition && p.condition !== 'New' ? ' tp-card-condition-alt' : '';
+    const outOfStock = p.stock <= 0;
+    const lowStock = !outOfStock && p.stock <= 3;
     return `
-      <article class="tp-card">
-        <div class="tp-card-media" aria-hidden="true">${p.icon || '📦'}</div>
+      <article class="tp-card" data-id="${p.id}">
+        <div class="tp-card-media">
+          ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name)}" loading="lazy">` : (p.icon || '📦')}
+        </div>
         <span class="tp-card-condition${conditionClass}">${escapeHtml(p.condition)}</span>
         <h3>${escapeHtml(p.name)}</h3>
         <p class="tp-specs">${escapeHtml(p.specs || '')}</p>
+        ${lowStock ? `<p class="tp-stock-low">Only ${p.stock} left</p>` : ''}
+        ${outOfStock ? `<p class="tp-stock-out">Out of stock</p>` : ''}
         <div class="tp-card-footer">
           <span class="tp-price">$${(p.price_cents / 100).toFixed(2)}</span>
-          <a href="../index.html#contact">Check availability →</a>
+          <button type="button" class="btn btn-primary tp-add-btn" data-id="${p.id}" ${outOfStock ? 'disabled' : ''}>
+            ${outOfStock ? 'Sold out' : 'Add to cart'}
+          </button>
         </div>
       </article>`;
   }
@@ -41,6 +49,16 @@
         el.innerHTML = items.length
           ? items.map(cardHtml).join('')
           : '<p class="tp-specs">Nothing listed in this category yet.</p>';
+      });
+
+      document.querySelectorAll('.tp-add-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          window.SSCart.addToCart(id, 1);
+          const original = btn.textContent;
+          btn.textContent = 'Added ✓';
+          setTimeout(() => { btn.textContent = original; }, 1200);
+        });
       });
     } catch (_) {
       Object.values(grids).forEach((el) => {

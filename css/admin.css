@@ -90,6 +90,38 @@ body{ background: var(--bg); }
 .admin-stat .num{ font-family: 'Space Grotesk', sans-serif; font-size: 1.7rem; }
 .admin-stat .label{ font-size: 0.8rem; color: var(--text-faint); margin-top: 4px; }
 
+.admin-tabs{
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.admin-tab{
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 4px;
+  margin-right: 20px;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.admin-tab.active{ color: var(--accent); border-bottom-color: var(--accent); }
+
+.order-status{
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--accent);
+}
+.order-status-fulfilled{ background: rgba(13,148,136,0.12); color: #0d9488; }
+
 .admin-section-head{
   display: flex;
   align-items: center;

@@ -20,7 +20,15 @@
   const fieldCondition = document.getElementById('field-condition');
   const fieldSpecs = document.getElementById('field-specs');
   const fieldPrice = document.getElementById('field-price');
+  const fieldStock = document.getElementById('field-stock');
   const fieldIcon = document.getElementById('field-icon');
+  const fieldImage = document.getElementById('field-image');
+
+  const tabProducts = document.getElementById('tab-products');
+  const tabOrders = document.getElementById('tab-orders');
+  const productsPanel = document.getElementById('products-panel');
+  const ordersPanel = document.getElementById('orders-panel');
+  const orderRows = document.getElementById('order-rows');
 
   const CATEGORY_LABELS = { phones: 'Phones', laptops: 'Laptops', parts: 'Parts & accessories' };
   const money = (cents) => `$${(cents / 100).toFixed(2)}`;
@@ -46,6 +54,58 @@
     dashboardView.hidden = false;
     loadOverview();
     loadProducts();
+  }
+
+  tabProducts.addEventListener('click', () => {
+    tabProducts.classList.add('active');
+    tabOrders.classList.remove('active');
+    productsPanel.hidden = false;
+    ordersPanel.hidden = true;
+  });
+  tabOrders.addEventListener('click', () => {
+    tabOrders.classList.add('active');
+    tabProducts.classList.remove('active');
+    ordersPanel.hidden = false;
+    productsPanel.hidden = true;
+    loadOrders();
+  });
+
+  async function loadOrders() {
+    try {
+      const orders = await api('/api/admin/orders');
+      orderRows.innerHTML = orders.map((o) => `
+        <tr data-id="${o.id}">
+          <td>${new Date(o.created_at).toLocaleString()}</td>
+          <td>${escapeHtml(o.customer_name || '—')}<br><span style="color:var(--text-faint);font-size:0.8em;">${escapeHtml(o.customer_email || '')}</span></td>
+          <td>${o.items.map((i) => `${i.quantity}× ${escapeHtml(i.name)}`).join('<br>')}</td>
+          <td>${money(o.total_cents)}</td>
+          <td>
+            <span class="order-status order-status-${o.fulfillment_status}">${o.fulfillment_status}</span>
+          </td>
+          <td>
+            <button type="button" data-action="toggle-fulfillment">
+              ${o.fulfillment_status === 'fulfilled' ? 'Mark unfulfilled' : 'Mark fulfilled'}
+            </button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6">No orders yet.</td></tr>';
+
+      orderRows.querySelectorAll('[data-action="toggle-fulfillment"]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = Number(btn.closest('tr').dataset.id);
+          const order = orders.find((o) => o.id === id);
+          const next = order.fulfillment_status === 'fulfilled' ? 'unfulfilled' : 'fulfilled';
+          try {
+            await api(`/api/admin/orders/${id}/fulfillment`, { method: 'PUT', body: JSON.stringify({ fulfillment_status: next }) });
+            loadOrders();
+          } catch (err) {
+            alert(err.message);
+          }
+        });
+      });
+    } catch (err) {
+      orderRows.innerHTML = `<tr><td colspan="6" class="admin-error">${err.message}</td></tr>`;
+    }
   }
 
   async function checkSession() {
@@ -104,6 +164,7 @@
           <td class="specs-cell">${escapeHtml(p.specs || '')}</td>
           <td>${escapeHtml(p.condition)}</td>
           <td>${money(p.price_cents)}</td>
+          <td>${p.stock}</td>
           <td>
             <div class="admin-row-actions">
               <button type="button" data-action="edit">Edit</button>
@@ -111,7 +172,7 @@
             </div>
           </td>
         </tr>
-      `).join('') || '<tr><td colspan="7">No products yet.</td></tr>';
+      `).join('') || '<tr><td colspan="8">No products yet.</td></tr>';
 
       productRows.querySelectorAll('[data-action="edit"]').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -127,7 +188,7 @@
         });
       });
     } catch (err) {
-      productRows.innerHTML = `<tr><td colspan="7" class="admin-error">${err.message}</td></tr>`;
+      productRows.innerHTML = `<tr><td colspan="8" class="admin-error">${err.message}</td></tr>`;
     }
   }
 
@@ -144,7 +205,9 @@
     fieldCondition.value = p.condition;
     fieldSpecs.value = p.specs || '';
     fieldPrice.value = (p.price_cents / 100).toFixed(2);
+    fieldStock.value = p.stock;
     fieldIcon.value = p.icon || '';
+    fieldImage.value = p.image_url || '';
     formHeading.textContent = `Editing: ${p.name}`;
     formSubmitBtn.textContent = 'Save changes';
     formCancelBtn.hidden = false;
@@ -172,7 +235,9 @@
       condition: fieldCondition.value,
       specs: fieldSpecs.value.trim(),
       price_cents: Math.round(parseFloat(fieldPrice.value) * 100),
+      stock: fieldStock.value.trim() ? Math.round(parseFloat(fieldStock.value)) : 25,
       icon: fieldIcon.value.trim() || '📦',
+      image_url: fieldImage.value.trim() || null,
     };
 
     try {

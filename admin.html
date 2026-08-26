@@ -49,71 +49,108 @@
 
       <div class="admin-stats" id="stats-row"></div>
 
-      <div class="admin-section-head">
-        <h2>Products</h2>
-      </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Icon</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Specs</th>
-              <th>Condition</th>
-              <th>Price</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="product-rows"></tbody>
-        </table>
+      <div class="admin-tabs">
+        <button type="button" class="admin-tab active" id="tab-products">Products</button>
+        <button type="button" class="admin-tab" id="tab-orders">Orders</button>
       </div>
 
-      <div class="admin-section-head">
-        <h2 id="form-heading">Add a product</h2>
+      <div id="products-panel">
+        <div class="admin-section-head">
+          <h2>Products</h2>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Icon</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Specs</th>
+                <th>Condition</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="product-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="admin-section-head">
+          <h2 id="form-heading">Add a product</h2>
+        </div>
+        <div class="admin-form-card">
+          <form id="product-form">
+            <input type="hidden" id="product-id">
+            <div class="admin-form-grid">
+              <div class="admin-field span-2">
+                <label for="field-name">Name</label>
+                <input type="text" id="field-name" required>
+              </div>
+              <div class="admin-field">
+                <label for="field-category">Category</label>
+                <select id="field-category">
+                  <option value="phones">Phones</option>
+                  <option value="laptops">Laptops</option>
+                  <option value="parts">Parts &amp; accessories</option>
+                </select>
+              </div>
+              <div class="admin-field">
+                <label for="field-condition">Condition</label>
+                <select id="field-condition">
+                  <option>New</option>
+                  <option>Certified Refurbished</option>
+                </select>
+              </div>
+              <div class="admin-field span-2">
+                <label for="field-specs">Specs / description</label>
+                <input type="text" id="field-specs" placeholder="e.g. 256GB storage · Triple camera system">
+              </div>
+              <div class="admin-field">
+                <label for="field-price">Price (USD)</label>
+                <input type="number" id="field-price" min="0" step="0.01" required>
+              </div>
+              <div class="admin-field">
+                <label for="field-stock">Stock</label>
+                <input type="number" id="field-stock" min="0" step="1" placeholder="25">
+              </div>
+              <div class="admin-field">
+                <label for="field-icon">Icon (emoji fallback)</label>
+                <input type="text" id="field-icon" maxlength="4" placeholder="📱">
+              </div>
+              <div class="admin-field span-2">
+                <label for="field-image">Image URL</label>
+                <input type="text" id="field-image" placeholder="Leave blank to use the category placeholder">
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <button type="submit" class="btn btn-primary" id="form-submit-btn">Add product</button>
+              <button type="button" class="btn btn-ghost" id="form-cancel-btn" hidden>Cancel edit</button>
+              <p class="admin-toast" id="form-toast"></p>
+            </div>
+          </form>
+        </div>
       </div>
-      <div class="admin-form-card">
-        <form id="product-form">
-          <input type="hidden" id="product-id">
-          <div class="admin-form-grid">
-            <div class="admin-field span-2">
-              <label for="field-name">Name</label>
-              <input type="text" id="field-name" required>
-            </div>
-            <div class="admin-field">
-              <label for="field-category">Category</label>
-              <select id="field-category">
-                <option value="phones">Phones</option>
-                <option value="laptops">Laptops</option>
-                <option value="parts">Parts &amp; accessories</option>
-              </select>
-            </div>
-            <div class="admin-field">
-              <label for="field-condition">Condition</label>
-              <select id="field-condition">
-                <option>New</option>
-                <option>Certified Refurbished</option>
-              </select>
-            </div>
-            <div class="admin-field span-2">
-              <label for="field-specs">Specs / description</label>
-              <input type="text" id="field-specs" placeholder="e.g. 256GB storage · Triple camera system">
-            </div>
-            <div class="admin-field">
-              <label for="field-price">Price (USD)</label>
-              <input type="number" id="field-price" min="0" step="0.01" required>
-            </div>
-            <div class="admin-field">
-              <label for="field-icon">Icon (emoji)</label>
-              <input type="text" id="field-icon" maxlength="4" placeholder="📱">
-            </div>
-          </div>
-          <div style="display:flex; gap:12px; align-items:center;">
-            <button type="submit" class="btn btn-primary" id="form-submit-btn">Add product</button>
-            <button type="button" class="btn btn-ghost" id="form-cancel-btn" hidden>Cancel edit</button>
-            <p class="admin-toast" id="form-toast"></p>
-          </div>
-        </form>
+
+      <div id="orders-panel" hidden>
+        <div class="admin-section-head">
+          <h2>Orders</h2>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Fulfillment</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="order-rows"></tbody>
+          </table>
+        </div>
       </div>
     </main>
   </div>
