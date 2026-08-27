@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
+const sharp = require('sharp');
 const { Pool } = require('pg');
 
 const app = express();
@@ -34,6 +35,16 @@ const PRODUCT_COLUMNS = `
   id, category, name, specs, price_cents, condition, icon, image_url, stock,
   created_at, updated_at, (image_data IS NOT NULL) AS has_image
 `;
+
+const PRODUCT_PHOTO_SIZE = 800;
+
+async function normalizeProductPhoto(buffer) {
+  return sharp(buffer)
+    .rotate() // auto-orient using EXIF before cropping
+    .resize(PRODUCT_PHOTO_SIZE, PRODUCT_PHOTO_SIZE, { fit: 'cover', position: 'attention' })
+    .jpeg({ quality: 85 })
+    .toBuffer();
+}
 
 function withImageSrc(row) {
   return {
@@ -352,7 +363,7 @@ app.get('/api/admin/session', (req, res) => {
   res.json({ loggedIn: !!session, role: session?.role || null });
 });
 
-/* ---------- Admin API — owner only: full overview & catalog management ---------- */
+/* ---------- Admin API — owner only: sales overview & order management ---------- */
 app.get('/api/admin/overview', requireOwner, requireDb, async (req, res) => {
   const totalRes = await pool.query('SELECT COUNT(*)::int AS count FROM products');
   const byCategoryRes = await pool.query('SELECT category, COUNT(*)::int AS count FROM products GROUP BY category ORDER BY category');
@@ -375,26 +386,27 @@ app.get('/api/admin/products', requireAdmin, requireDb, async (req, res) => {
   res.json(rows.map(withImageSrc));
 });
 
-app.post('/api/admin/products', requireOwner, requireDb, upload.single('image'), async (req, res) => {
+app.post('/api/admin/products', requireAdmin, requireDb, upload.single('image'), async (req, res) => {
   const { category, name, specs, condition, icon, image_url } = req.body || {};
   const price_cents = Math.round(parseFloat(req.body?.price_cents));
   const stock = req.body?.stock ? Math.round(parseFloat(req.body.stock)) : 25;
   if (!category || !name || !Number.isFinite(price_cents)) {
     return res.status(400).json({ error: 'category, name and price_cents are required' });
   }
+  const imageData = req.file ? await normalizeProductPhoto(req.file.buffer) : null;
   const { rows } = await pool.query(
     `INSERT INTO products (category, name, specs, price_cents, condition, icon, image_url, stock, image_data, image_mime)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING ${PRODUCT_COLUMNS}`,
     [
       category, name, specs || '', price_cents, condition || 'New', icon || '📦',
       image_url || CATEGORY_IMAGE[category] || null, stock,
-      req.file ? req.file.buffer : null, req.file ? req.file.mimetype : null,
+      imageData, imageData ? 'image/jpeg' : null,
     ]
   );
   res.status(201).json(withImageSrc(rows[0]));
 });
 
-app.put('/api/admin/products/:id', requireOwner, requireDb, upload.single('image'), async (req, res) => {
+app.put('/api/admin/products/:id', requireAdmin, requireDb, upload.single('image'), async (req, res) => {
   const { id } = req.params;
   const { category, name, specs, condition, icon, image_url } = req.body || {};
   const price_cents = Math.round(parseFloat(req.body?.price_cents));
@@ -406,8 +418,9 @@ app.put('/api/admin/products/:id', requireOwner, requireDb, upload.single('image
   const params = [category, name, specs || '', price_cents, condition || 'New', icon || '📦', image_url || CATEGORY_IMAGE[category] || null, stock];
   let imageClause = '';
   if (req.file) {
+    const imageData = await normalizeProductPhoto(req.file.buffer);
     imageClause = `, image_data = $${params.length + 1}, image_mime = $${params.length + 2}`;
-    params.push(req.file.buffer, req.file.mimetype);
+    params.push(imageData, 'image/jpeg');
   } else if (req.body?.remove_image === 'true') {
     imageClause = ', image_data = NULL, image_mime = NULL';
   }
@@ -422,7 +435,7 @@ app.put('/api/admin/products/:id', requireOwner, requireDb, upload.single('image
   res.json(withImageSrc(rows[0]));
 });
 
-app.delete('/api/admin/products/:id', requireOwner, requireDb, async (req, res) => {
+app.delete('/api/admin/products/:id', requireAdmin, requireDb, async (req, res) => {
   const { id } = req.params;
   const { rowCount } = await pool.query('DELETE FROM products WHERE id=$1', [id]);
   if (!rowCount) return res.status(404).json({ error: 'Not found' });

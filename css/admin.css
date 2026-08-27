@@ -46,6 +46,15 @@ body{ background: var(--bg); }
   min-height: 1.2em;
 }
 .admin-login-card button{ width: 100%; justify-content: center; }
+.admin-back-to-store{
+  display: block;
+  text-align: center;
+  margin-top: 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.admin-back-to-store:hover{ color: var(--accent); }
 
 /* ---- Dashboard shell ---- */
 .admin-header{

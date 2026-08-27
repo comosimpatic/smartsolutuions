@@ -32,6 +32,7 @@
         <button type="submit" class="btn btn-primary">Sign in</button>
         <p class="admin-error" id="login-error"></p>
       </form>
+      <a href="work/tech-store.html" class="admin-back-to-store">← Back to the store</a>
     </div>
   </section>
 
@@ -65,12 +66,12 @@
       <h1 id="dashboard-title">Tech Store</h1>
 
       <div class="admin-tabs" id="admin-tabs">
-        <button type="button" class="admin-tab" id="tab-sale">Record a sale</button>
+        <button type="button" class="admin-tab" id="tab-sale" data-staff-only>Record a sale</button>
         <button type="button" class="admin-tab" id="tab-overview" data-owner-only>Overview</button>
-        <button type="button" class="admin-tab" id="tab-products" data-owner-only>Products</button>
+        <button type="button" class="admin-tab" id="tab-products">Products</button>
       </div>
 
-      <!-- ============ Record a sale (owner + staff) ============ -->
+      <!-- ============ Record a sale (staff only) ============ -->
       <div id="sale-panel">
         <div class="admin-section-head"><h2>Record an in-store sale</h2></div>
         <div class="admin-form-card">
@@ -140,7 +141,7 @@
         </div>
       </div>
 
-      <!-- ============ Products (owner only) ============ -->
+      <!-- ============ Products (owner + staff) ============ -->
       <div id="products-panel" hidden>
         <div class="admin-section-head">
           <h2>Products</h2>

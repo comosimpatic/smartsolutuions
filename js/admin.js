@@ -85,6 +85,7 @@
     roleBadge.textContent = role === 'owner' ? 'Owner' : 'Staff';
     ownerElevateLink.hidden = role === 'owner';
     document.querySelectorAll('[data-owner-only]').forEach((el) => { el.hidden = role !== 'owner'; });
+    document.querySelectorAll('[data-staff-only]').forEach((el) => { el.hidden = role !== 'staff'; });
     activateTab(role === 'owner' ? 'overview' : 'sale');
   }
 
