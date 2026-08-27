@@ -73,7 +73,7 @@
       document.getElementById(panel).hidden = key !== name;
     });
     if (name === 'overview') { loadOverview(); loadOrders(); }
-    if (name === 'products') { loadProducts(); }
+    if (name === 'products') { loadProducts(); loadPromo(); }
     if (name === 'sale') { loadSaleProducts(); }
     if (name === 'inquiries') { loadInquiries(); }
   }
@@ -260,6 +260,60 @@
       inquiryRows.innerHTML = `<tr><td colspan="7" class="admin-error">${err.message}</td></tr>`;
     }
   }
+
+  /* ============ Storefront promo banner (owner + staff) ============ */
+  async function loadPromo() {
+    try {
+      const promo = await api('/api/admin/promo');
+      document.getElementById('promo-headline').value = promo.headline || '';
+      document.getElementById('promo-subtext').value = promo.subtext || '';
+      document.getElementById('promo-cta-text').value = promo.cta_text || '';
+      document.getElementById('promo-cta-link').value = promo.cta_link || '';
+      document.getElementById('promo-enabled').checked = !!promo.enabled;
+      document.getElementById('promo-image-file').value = '';
+      document.getElementById('promo-image-remove').checked = false;
+      const preview = document.getElementById('promo-image-preview');
+      const previewImg = document.getElementById('promo-image-preview-img');
+      if (promo.image_src) {
+        previewImg.src = promo.image_src;
+        preview.hidden = false;
+      } else {
+        preview.hidden = true;
+      }
+    } catch (err) {
+      document.getElementById('promo-toast').textContent = err.message;
+    }
+  }
+
+  document.getElementById('promo-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const toast = document.getElementById('promo-toast');
+    toast.textContent = '';
+    toast.className = 'admin-toast';
+
+    const fd = new FormData();
+    fd.append('headline', document.getElementById('promo-headline').value.trim());
+    fd.append('subtext', document.getElementById('promo-subtext').value.trim());
+    fd.append('cta_text', document.getElementById('promo-cta-text').value.trim());
+    fd.append('cta_link', document.getElementById('promo-cta-link').value.trim());
+    fd.append('enabled', document.getElementById('promo-enabled').checked ? 'true' : 'false');
+    const fileInput = document.getElementById('promo-image-file');
+    if (fileInput.files[0]) fd.append('image', fileInput.files[0]);
+    if (document.getElementById('promo-image-remove').checked) fd.append('remove_image', 'true');
+
+    try {
+      const res = await fetch('/api/admin/promo', { method: 'PUT', body: fd });
+      let data = null;
+      try { data = await res.json(); } catch (_) { /* no body */ }
+      if (!res.ok) throw new Error((data && data.error) || `Request failed (${res.status})`);
+      toast.textContent = 'Banner saved.';
+      toast.classList.add('ok');
+      loadPromo();
+    } catch (err) {
+      toast.textContent = err.message;
+      toast.classList.add('err');
+    }
+  });
 
   /* ============ Products (owner + staff) ============ */
   async function loadProducts() {

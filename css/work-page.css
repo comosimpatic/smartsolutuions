@@ -177,6 +177,38 @@
 }
 
 /* ============ Tech store ============ */
+.tp-promo{ padding: 50px 0 10px; }
+.tp-promo-inner{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 44px 48px;
+  overflow: hidden;
+}
+.tp-promo-text{ max-width: 480px; }
+.tp-promo-text h2{
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+.tp-promo-text p{ color: var(--text-dim); margin-bottom: 22px; line-height: 1.55; }
+.tp-promo-media{
+  flex-shrink: 0;
+  max-width: 320px;
+}
+.tp-promo-media img{ width: 100%; height: auto; max-height: 260px; object-fit: contain; display: block; }
+
+@media (max-width: 760px){
+  .tp-promo-inner{ flex-direction: column; text-align: center; padding: 36px 28px; }
+  .tp-promo-text{ max-width: none; }
+  .tp-promo-media{ max-width: 220px; }
+}
+
 .tp-search-section{ padding: 40px 0 0; }
 .tp-search-input{
   width: 100%;

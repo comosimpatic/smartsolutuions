@@ -268,5 +268,30 @@
     }
   }
 
+  async function loadPromo() {
+    try {
+      const res = await fetch('/api/promo');
+      const promo = await res.json();
+      if (!promo.enabled || !promo.headline) return;
+
+      document.getElementById('tp-promo-headline').textContent = promo.headline;
+      document.getElementById('tp-promo-subtext').textContent = promo.subtext || '';
+      const cta = document.getElementById('tp-promo-cta');
+      cta.textContent = promo.cta_text || 'Shop now';
+      cta.href = promo.cta_link || '#tp-search';
+
+      const media = document.getElementById('tp-promo-media');
+      if (promo.image_src) {
+        media.innerHTML = `<img src="${escapeHtml(promo.image_src)}" alt="">`;
+        media.hidden = false;
+      }
+
+      document.getElementById('tp-promo').hidden = false;
+    } catch (_) {
+      // no promo banner available — leave it hidden
+    }
+  }
+
   loadProducts();
+  loadPromo();
 })();

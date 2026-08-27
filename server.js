@@ -46,6 +46,14 @@ async function normalizeProductPhoto(buffer) {
     .toBuffer();
 }
 
+async function normalizePromoImage(buffer) {
+  const img = sharp(buffer).rotate().resize(1000, 1000, { fit: 'inside', withoutEnlargement: true });
+  const meta = await img.metadata();
+  return meta.hasAlpha
+    ? { buffer: await img.png().toBuffer(), mime: 'image/png' }
+    : { buffer: await img.jpeg({ quality: 88 }).toBuffer(), mime: 'image/jpeg' };
+}
+
 function withImageSrc(row) {
   const version = row.updated_at ? new Date(row.updated_at).getTime() : 0;
   return {
@@ -134,6 +142,22 @@ async function initDb() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS promo_banner (
+      id INTEGER PRIMARY KEY DEFAULT 1,
+      headline TEXT NOT NULL DEFAULT '',
+      subtext TEXT NOT NULL DEFAULT '',
+      cta_text TEXT NOT NULL DEFAULT 'Shop now',
+      cta_link TEXT NOT NULL DEFAULT '#tp-search',
+      image_data BYTEA,
+      image_mime TEXT,
+      enabled BOOLEAN NOT NULL DEFAULT false,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      CONSTRAINT promo_banner_single_row CHECK (id = 1)
+    );
+  `);
+  await pool.query(`INSERT INTO promo_banner (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
 
   const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM products');
   if (rows[0].count === 0) {
@@ -240,6 +264,24 @@ app.post('/api/inquiries', requireDb, async (req, res) => {
     [name.trim(), email.trim(), phone ? phone.trim() : null, product_name ? product_name.trim() : null, message.trim()]
   );
   res.status(201).json({ ok: true });
+});
+
+/* ---------- Promo banner ---------- */
+app.get('/api/promo', requireDb, async (req, res) => {
+  const { rows } = await pool.query('SELECT headline, subtext, cta_text, cta_link, enabled, updated_at, (image_data IS NOT NULL) AS has_image FROM promo_banner WHERE id = 1');
+  const row = rows[0];
+  if (!row || !row.enabled) return res.json({ enabled: false });
+  const version = row.updated_at ? new Date(row.updated_at).getTime() : 0;
+  res.json({ ...row, image_src: row.has_image ? `/api/promo/image?v=${version}` : null });
+});
+
+app.get('/api/promo/image', requireDb, async (req, res) => {
+  const { rows } = await pool.query('SELECT image_data, image_mime FROM promo_banner WHERE id = 1');
+  const row = rows[0];
+  if (!row || !row.image_data) return res.status(404).end();
+  res.setHeader('Content-Type', row.image_mime || 'image/png');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.end(row.image_data);
 });
 
 /* ---------- Checkout (Stripe) ---------- */
@@ -466,6 +508,39 @@ app.delete('/api/admin/products/:id', requireAdmin, requireDb, async (req, res) 
   const { rowCount } = await pool.query('DELETE FROM products WHERE id=$1', [id]);
   if (!rowCount) return res.status(404).json({ error: 'Not found' });
   res.status(204).end();
+});
+
+app.get('/api/admin/promo', requireAdmin, requireDb, async (req, res) => {
+  const { rows } = await pool.query('SELECT headline, subtext, cta_text, cta_link, enabled, updated_at, (image_data IS NOT NULL) AS has_image FROM promo_banner WHERE id = 1');
+  const row = rows[0];
+  const version = row.updated_at ? new Date(row.updated_at).getTime() : 0;
+  res.json({ ...row, image_src: row.has_image ? `/api/promo/image?v=${version}` : null });
+});
+
+app.put('/api/admin/promo', requireAdmin, requireDb, upload.single('image'), async (req, res) => {
+  const { headline, subtext, cta_text, cta_link } = req.body || {};
+  const enabled = req.body?.enabled === 'true';
+
+  const params = [
+    headline || '', subtext || '', cta_text || 'Shop now', cta_link || '#tp-search', enabled,
+  ];
+  let imageClause = '';
+  if (req.file) {
+    const { buffer: imageData, mime } = await normalizePromoImage(req.file.buffer);
+    imageClause = `, image_data = $${params.length + 1}, image_mime = $${params.length + 2}`;
+    params.push(imageData, mime);
+  } else if (req.body?.remove_image === 'true') {
+    imageClause = ', image_data = NULL, image_mime = NULL';
+  }
+
+  const { rows } = await pool.query(
+    `UPDATE promo_banner SET headline=$1, subtext=$2, cta_text=$3, cta_link=$4, enabled=$5, updated_at=now()${imageClause}
+     WHERE id = 1 RETURNING headline, subtext, cta_text, cta_link, enabled, updated_at, (image_data IS NOT NULL) AS has_image`,
+    params
+  );
+  const row = rows[0];
+  const version = row.updated_at ? new Date(row.updated_at).getTime() : 0;
+  res.json({ ...row, image_src: row.has_image ? `/api/promo/image?v=${version}` : null });
 });
 
 app.get('/api/admin/orders', requireOwner, requireDb, async (req, res) => {
