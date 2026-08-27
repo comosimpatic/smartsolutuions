@@ -47,9 +47,10 @@ async function normalizeProductPhoto(buffer) {
 }
 
 function withImageSrc(row) {
+  const version = row.updated_at ? new Date(row.updated_at).getTime() : 0;
   return {
     ...row,
-    image_src: row.has_image ? `/api/products/${row.id}/image` : (row.image_url || CATEGORY_IMAGE[row.category] || null),
+    image_src: row.has_image ? `/api/products/${row.id}/image?v=${version}` : (row.image_url || CATEGORY_IMAGE[row.category] || null),
   };
 }
 
