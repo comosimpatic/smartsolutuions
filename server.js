@@ -122,6 +122,19 @@ async function initDb() {
     );
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS inquiries (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT,
+      product_name TEXT,
+      message TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'new',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
   const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM products');
   if (rows[0].count === 0) {
     for (const [category, name, specs, price_cents, condition, icon] of SEED_PRODUCTS) {
@@ -215,6 +228,18 @@ app.get('/api/products/:id/image', requireDb, async (req, res) => {
   res.setHeader('Content-Type', row.image_mime || 'image/jpeg');
   res.setHeader('Cache-Control', 'public, max-age=3600');
   res.end(row.image_data);
+});
+
+app.post('/api/inquiries', requireDb, async (req, res) => {
+  const { name, email, phone, product_name, message } = req.body || {};
+  if (!String(name || '').trim() || !String(email || '').trim() || !String(message || '').trim()) {
+    return res.status(400).json({ error: 'Name, email and message are required' });
+  }
+  await pool.query(
+    'INSERT INTO inquiries (name, email, phone, product_name, message) VALUES ($1,$2,$3,$4,$5)',
+    [name.trim(), email.trim(), phone ? phone.trim() : null, product_name ? product_name.trim() : null, message.trim()]
+  );
+  res.status(201).json({ ok: true });
 });
 
 /* ---------- Checkout (Stripe) ---------- */
@@ -516,6 +541,20 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
   }
 
   res.status(201).json({ order, items: itemRows });
+});
+
+/* ---------- Admin API — owner + staff: customer inquiries ---------- */
+app.get('/api/admin/inquiries', requireAdmin, requireDb, async (req, res) => {
+  const { rows } = await pool.query('SELECT * FROM inquiries ORDER BY created_at DESC LIMIT 200');
+  res.json(rows);
+});
+
+app.put('/api/admin/inquiries/:id/status', requireAdmin, requireDb, async (req, res) => {
+  const { id } = req.params;
+  const status = req.body?.status === 'read' ? 'read' : 'new';
+  const { rows } = await pool.query('UPDATE inquiries SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+  if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+  res.json(rows[0]);
 });
 
 app.get('/admin', (req, res) => {

@@ -69,6 +69,7 @@
         <button type="button" class="admin-tab" id="tab-sale" data-staff-only>Record a sale</button>
         <button type="button" class="admin-tab" id="tab-overview" data-owner-only>Overview</button>
         <button type="button" class="admin-tab" id="tab-products">Products</button>
+        <button type="button" class="admin-tab" id="tab-inquiries">Inquiries</button>
       </div>
 
       <!-- ============ Record a sale (staff only) ============ -->
@@ -225,6 +226,29 @@
               <p class="admin-toast" id="form-toast"></p>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- ============ Inquiries (owner + staff) ============ -->
+      <div id="inquiries-panel" hidden>
+        <div class="admin-section-head">
+          <h2>Customer inquiries</h2>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Item</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="inquiry-rows"></tbody>
+          </table>
         </div>
       </div>
     </main>

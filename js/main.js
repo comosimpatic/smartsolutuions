@@ -26,16 +26,18 @@
   /* ---------- Mobile nav toggle ---------- */
   const navToggle = document.getElementById('nav-toggle');
   const mainNav = document.getElementById('main-nav');
-  navToggle.addEventListener('click', () => {
-    navToggle.classList.toggle('open');
-    mainNav.classList.toggle('open');
-  });
-  mainNav.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', () => {
-      navToggle.classList.remove('open');
-      mainNav.classList.remove('open');
+  if (navToggle && mainNav) {
+    navToggle.addEventListener('click', () => {
+      navToggle.classList.toggle('open');
+      mainNav.classList.toggle('open');
     });
-  });
+    mainNav.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        navToggle.classList.remove('open');
+        mainNav.classList.remove('open');
+      });
+    });
+  }
 
   /* ---------- Scroll reveal ---------- */
   const revealEls = document.querySelectorAll('.reveal');

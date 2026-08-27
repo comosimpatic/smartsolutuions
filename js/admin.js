@@ -10,6 +10,7 @@
   const statsRow = document.getElementById('stats-row');
   const productRows = document.getElementById('product-rows');
   const orderRows = document.getElementById('order-rows');
+  const inquiryRows = document.getElementById('inquiry-rows');
   const productForm = document.getElementById('product-form');
   const formHeading = document.getElementById('form-heading');
   const formSubmitBtn = document.getElementById('form-submit-btn');
@@ -63,6 +64,7 @@
     sale: { btn: 'tab-sale', panel: 'sale-panel' },
     overview: { btn: 'tab-overview', panel: 'overview-panel' },
     products: { btn: 'tab-products', panel: 'products-panel' },
+    inquiries: { btn: 'tab-inquiries', panel: 'inquiries-panel' },
   };
 
   function activateTab(name) {
@@ -73,11 +75,13 @@
     if (name === 'overview') { loadOverview(); loadOrders(); }
     if (name === 'products') { loadProducts(); }
     if (name === 'sale') { loadSaleProducts(); }
+    if (name === 'inquiries') { loadInquiries(); }
   }
 
   document.getElementById('tab-sale').addEventListener('click', () => activateTab('sale'));
   document.getElementById('tab-overview').addEventListener('click', () => activateTab('overview'));
   document.getElementById('tab-products').addEventListener('click', () => activateTab('products'));
+  document.getElementById('tab-inquiries').addEventListener('click', () => activateTab('inquiries'));
 
   function showDashboard(role) {
     loginView.hidden = true;
@@ -221,7 +225,43 @@
     });
   }
 
-  /* ============ Products (owner) ============ */
+  /* ============ Inquiries (owner + staff) ============ */
+  async function loadInquiries() {
+    try {
+      const inquiries = await api('/api/admin/inquiries');
+      inquiryRows.innerHTML = inquiries.map((i) => `
+        <tr data-id="${i.id}">
+          <td>${new Date(i.created_at).toLocaleString()}</td>
+          <td>${escapeHtml(i.name)}</td>
+          <td>${escapeHtml(i.email)}${i.phone ? `<br><span style="color:var(--text-faint);font-size:0.8em;">${escapeHtml(i.phone)}</span>` : ''}</td>
+          <td>${escapeHtml(i.product_name || '—')}</td>
+          <td class="specs-cell">${escapeHtml(i.message)}</td>
+          <td><span class="order-status ${i.status === 'read' ? 'order-status-fulfilled' : ''}">${i.status}</span></td>
+          <td>
+            <button type="button" data-action="toggle-status">${i.status === 'read' ? 'Mark new' : 'Mark read'}</button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="7">No inquiries yet.</td></tr>';
+
+      inquiryRows.querySelectorAll('[data-action="toggle-status"]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = Number(btn.closest('tr').dataset.id);
+          const inquiry = inquiries.find((i) => i.id === id);
+          const next = inquiry.status === 'read' ? 'new' : 'read';
+          try {
+            await api(`/api/admin/inquiries/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: next }) });
+            loadInquiries();
+          } catch (err) {
+            alert(err.message);
+          }
+        });
+      });
+    } catch (err) {
+      inquiryRows.innerHTML = `<tr><td colspan="7" class="admin-error">${err.message}</td></tr>`;
+    }
+  }
+
+  /* ============ Products (owner + staff) ============ */
   async function loadProducts() {
     try {
       const products = await api('/api/admin/products');

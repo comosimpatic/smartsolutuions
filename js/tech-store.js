@@ -58,6 +58,7 @@
           <span class="tp-price" id="tp-modal-price"></span>
           <button type="button" class="btn btn-primary tp-add-btn" id="tp-modal-add-btn">Add to cart</button>
         </div>
+        <button type="button" class="tp-modal-ask-link" id="tp-modal-ask-btn">Ask us about this item →</button>
       </div>
     </div>`;
   document.body.appendChild(modalOverlay);
@@ -65,9 +66,21 @@
   function closeModal() { modalOverlay.classList.remove('open'); }
   modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
   modalOverlay.querySelector('.tp-modal-close').addEventListener('click', closeModal);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    closeModal();
+    closeInquiry();
+  });
+
+  let currentModalProduct = null;
+
+  document.getElementById('tp-modal-ask-btn').addEventListener('click', () => {
+    closeModal();
+    openInquiry(currentModalProduct ? currentModalProduct.name : null);
+  });
 
   function openModal(p) {
+    currentModalProduct = p;
     const media = document.getElementById('tp-modal-media');
     media.className = `tp-modal-media${p.has_image ? ' tp-card-media-photo' : ''}`;
     media.innerHTML = p.image_src ? `<img src="${escapeHtml(p.image_src)}" alt="${escapeHtml(p.name)}">` : (p.icon || '📦');
@@ -96,6 +109,94 @@
 
     modalOverlay.classList.add('open');
   }
+
+  /* ---------- Inquiry modal ---------- */
+  const inquiryOverlay = document.createElement('div');
+  inquiryOverlay.className = 'tp-modal-overlay';
+  inquiryOverlay.id = 'tp-inquiry-overlay';
+  inquiryOverlay.innerHTML = `
+    <div class="tp-modal tp-inquiry-modal" role="dialog" aria-modal="true">
+      <button type="button" class="tp-modal-close" aria-label="Close">✕</button>
+      <div class="tp-modal-body">
+        <h2>Get in touch</h2>
+        <p class="tp-modal-specs">Tell us what you're looking for and we'll confirm pricing and availability.</p>
+        <form id="tp-inquiry-form">
+          <div class="tp-inquiry-field">
+            <label for="tp-inquiry-name">Name</label>
+            <input type="text" id="tp-inquiry-name" required>
+          </div>
+          <div class="tp-inquiry-field">
+            <label for="tp-inquiry-email">Email</label>
+            <input type="email" id="tp-inquiry-email" required>
+          </div>
+          <div class="tp-inquiry-field">
+            <label for="tp-inquiry-phone">Phone (optional)</label>
+            <input type="tel" id="tp-inquiry-phone">
+          </div>
+          <div class="tp-inquiry-field">
+            <label for="tp-inquiry-message">Message</label>
+            <textarea id="tp-inquiry-message" rows="3" placeholder="e.g. Do you have the iPhone 15 Pro in stock?" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="tp-inquiry-submit">Send</button>
+          <p class="tp-inquiry-note" id="tp-inquiry-note"></p>
+        </form>
+      </div>
+    </div>`;
+  document.body.appendChild(inquiryOverlay);
+
+  function closeInquiry() { inquiryOverlay.classList.remove('open'); }
+  inquiryOverlay.addEventListener('click', (e) => { if (e.target === inquiryOverlay) closeInquiry(); });
+  inquiryOverlay.querySelector('.tp-modal-close').addEventListener('click', closeInquiry);
+
+  function openInquiry(productName) {
+    const note = document.getElementById('tp-inquiry-note');
+    note.textContent = '';
+    note.className = 'tp-inquiry-note';
+    document.getElementById('tp-inquiry-message').value = productName ? `Do you have the ${productName} in stock?` : '';
+    inquiryOverlay.dataset.product = productName || '';
+    inquiryOverlay.classList.add('open');
+    document.getElementById('tp-inquiry-name').focus();
+  }
+
+  document.querySelectorAll('.tp-open-inquiry').forEach((btn) => {
+    btn.addEventListener('click', () => openInquiry());
+  });
+
+  document.getElementById('tp-inquiry-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const note = document.getElementById('tp-inquiry-note');
+    const submitBtn = document.getElementById('tp-inquiry-submit');
+    note.textContent = '';
+    note.className = 'tp-inquiry-note';
+
+    const payload = {
+      name: document.getElementById('tp-inquiry-name').value.trim(),
+      email: document.getElementById('tp-inquiry-email').value.trim(),
+      phone: document.getElementById('tp-inquiry-phone').value.trim(),
+      message: document.getElementById('tp-inquiry-message').value.trim(),
+      product_name: inquiryOverlay.dataset.product || null,
+    };
+
+    submitBtn.disabled = true;
+    try {
+      const res = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not send your message');
+      note.textContent = "Thanks — we'll get back to you shortly.";
+      note.classList.add('tp-inquiry-ok');
+      document.getElementById('tp-inquiry-form').reset();
+      setTimeout(closeInquiry, 1600);
+    } catch (err) {
+      note.textContent = err.message;
+      note.classList.add('tp-inquiry-err');
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
 
   // Event delegation so clicks work after every re-render (search filtering, etc.)
   Object.values(GRIDS).forEach((gridId) => {
