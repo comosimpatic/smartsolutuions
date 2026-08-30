@@ -24,6 +24,11 @@ const pool = process.env.DATABASE_URL
   : null;
 
 const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new (require('@anthropic-ai/sdk'))({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+
+const LOW_STOCK_THRESHOLD = 3;
 
 const CATEGORY_IMAGE = {
   phones: '/assets/products/phone.svg',
@@ -32,9 +37,20 @@ const CATEGORY_IMAGE = {
 };
 
 const PRODUCT_COLUMNS = `
-  id, category, name, specs, price_cents, condition, icon, image_url, stock,
+  id, category, name, specs, price_cents, condition, icon, image_url, stock, barcode,
   created_at, updated_at, (image_data IS NOT NULL) AS has_image
 `;
+
+const SERVICE_COLUMNS = `id, name, description, price_cents, icon, active, created_at, updated_at`;
+
+const SEED_SERVICES = [
+  ['Phone screen repair', 'Cracked or unresponsive screen replacement', 8900, '📱'],
+  ['Battery replacement', 'New battery install for phone or laptop', 3900, '🔋'],
+  ['Diagnostic', 'Full hardware & software diagnostic check', 1900, '🔍'],
+  ['Data recovery', 'Recover data from a damaged or non-booting device', 6900, '💾'],
+  ['Software / virus cleanup', 'Malware removal, OS repair, performance tune-up', 4900, '🛠️'],
+  ['Laptop screen repair', 'Cracked or damaged laptop display replacement', 14900, '💻'],
+];
 
 const PRODUCT_PHOTO_SIZE = 800;
 
@@ -101,6 +117,32 @@ async function initDb() {
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 25`);
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_data BYTEA`);
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_mime TEXT`);
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode TEXT`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS products_barcode_key ON products (barcode) WHERE barcode IS NOT NULL AND barcode <> ''`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS services (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      price_cents INTEGER NOT NULL,
+      icon TEXT NOT NULL DEFAULT '🛠️',
+      active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
+  const { rows: serviceCountRows } = await pool.query('SELECT COUNT(*)::int AS count FROM services');
+  if (serviceCountRows[0].count === 0) {
+    for (const [name, description, price_cents, icon] of SEED_SERVICES) {
+      await pool.query(
+        'INSERT INTO services (name, description, price_cents, icon) VALUES ($1,$2,$3,$4)',
+        [name, description, price_cents, icon]
+      );
+    }
+    console.log(`Seeded ${SEED_SERVICES.length} services.`);
+  }
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS orders (
@@ -129,6 +171,7 @@ async function initDb() {
       quantity INTEGER NOT NULL
     );
   `);
+  await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS service_id INTEGER REFERENCES services(id) ON DELETE SET NULL`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS inquiries (
@@ -238,6 +281,35 @@ function requireStripe(req, res, next) {
   if (!stripe) return res.status(503).json({ error: 'Payments are not configured yet.' });
   next();
 }
+
+function requireAnthropic(req, res, next) {
+  if (!anthropic) return res.status(503).json({ error: 'AI insights are not configured yet.' });
+  next();
+}
+
+/* ---------- Live dashboard feed (Server-Sent Events) ---------- */
+let sseClients = [];
+
+function broadcastEvent(type, data) {
+  const payload = `data: ${JSON.stringify({ type, ...data, at: new Date().toISOString() })}\n\n`;
+  sseClients.forEach((res) => res.write(payload));
+}
+
+setInterval(() => {
+  sseClients.forEach((res) => res.write(':ping\n\n'));
+}, 25000);
+
+app.get('/api/admin/events', requireAdmin, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+  res.write(':connected\n\n');
+  sseClients.push(res);
+  req.on('close', () => {
+    sseClients = sseClients.filter((c) => c !== res);
+  });
+});
 
 /* ---------- Public API ---------- */
 app.get('/api/products', requireDb, async (req, res) => {
@@ -374,10 +446,17 @@ app.get('/api/checkout/confirm', requireDb, requireStripe, async (req, res) => {
     );
     itemRows.push({ name: li.description, price_cents: li.price.unit_amount, quantity: li.quantity });
     if (productId) {
-      await pool.query('UPDATE products SET stock = GREATEST(stock - $1, 0) WHERE id = $2', [li.quantity, productId]);
+      const { rows: stockRows } = await pool.query(
+        'UPDATE products SET stock = GREATEST(stock - $1, 0) WHERE id = $2 RETURNING name, stock',
+        [li.quantity, productId]
+      );
+      if (stockRows[0] && stockRows[0].stock <= LOW_STOCK_THRESHOLD) {
+        broadcastEvent('low_stock', { name: stockRows[0].name, stock: stockRows[0].stock });
+      }
     }
   }
 
+  broadcastEvent('sale', { channel: 'online', total_cents: order.total_cents, items: itemRows });
   res.json({ order, items: itemRows });
 });
 
@@ -440,12 +519,23 @@ app.get('/api/admin/overview', requireOwner, requireDb, async (req, res) => {
     SELECT COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS order_count
     FROM orders WHERE created_at >= now() - interval '30 days'
   `);
+  const todayRes = await pool.query(`
+    SELECT COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS order_count
+    FROM orders WHERE created_at >= date_trunc('day', now())
+  `);
+  const lowStockRes = await pool.query(
+    'SELECT id, name, stock FROM products WHERE stock <= $1 ORDER BY stock ASC LIMIT 20',
+    [LOW_STOCK_THRESHOLD]
+  );
   res.json({
     totalProducts: totalRes.rows[0].count,
     byCategory: byCategoryRes.rows,
     lastUpdated: lastUpdatedRes.rows[0].updated_at,
     revenue30dCents: salesRes.rows[0].revenue_cents,
     orders30d: salesRes.rows[0].order_count,
+    revenueTodayCents: todayRes.rows[0].revenue_cents,
+    ordersToday: todayRes.rows[0].order_count,
+    lowStock: lowStockRes.rows,
   });
 });
 
@@ -456,34 +546,41 @@ app.get('/api/admin/products', requireAdmin, requireDb, async (req, res) => {
 
 app.post('/api/admin/products', requireAdmin, requireDb, upload.single('image'), async (req, res) => {
   const { category, name, specs, condition, icon, image_url } = req.body || {};
+  const barcode = req.body?.barcode ? req.body.barcode.trim() : null;
   const price_cents = Math.round(parseFloat(req.body?.price_cents));
   const stock = req.body?.stock ? Math.round(parseFloat(req.body.stock)) : 25;
   if (!category || !name || !Number.isFinite(price_cents)) {
     return res.status(400).json({ error: 'category, name and price_cents are required' });
   }
   const imageData = req.file ? await normalizeProductPhoto(req.file.buffer) : null;
-  const { rows } = await pool.query(
-    `INSERT INTO products (category, name, specs, price_cents, condition, icon, image_url, stock, image_data, image_mime)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING ${PRODUCT_COLUMNS}`,
-    [
-      category, name, specs || '', price_cents, condition || 'New', icon || '📦',
-      image_url || CATEGORY_IMAGE[category] || null, stock,
-      imageData, imageData ? 'image/jpeg' : null,
-    ]
-  );
-  res.status(201).json(withImageSrc(rows[0]));
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO products (category, name, specs, price_cents, condition, icon, image_url, stock, barcode, image_data, image_mime)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING ${PRODUCT_COLUMNS}`,
+      [
+        category, name, specs || '', price_cents, condition || 'New', icon || '📦',
+        image_url || CATEGORY_IMAGE[category] || null, stock, barcode || null,
+        imageData, imageData ? 'image/jpeg' : null,
+      ]
+    );
+    res.status(201).json(withImageSrc(rows[0]));
+  } catch (err) {
+    if (err.code === '23505') return res.status(400).json({ error: 'That barcode is already assigned to another product.' });
+    throw err;
+  }
 });
 
 app.put('/api/admin/products/:id', requireAdmin, requireDb, upload.single('image'), async (req, res) => {
   const { id } = req.params;
   const { category, name, specs, condition, icon, image_url } = req.body || {};
+  const barcode = req.body?.barcode ? req.body.barcode.trim() : null;
   const price_cents = Math.round(parseFloat(req.body?.price_cents));
   const stock = req.body?.stock ? Math.round(parseFloat(req.body.stock)) : 25;
   if (!category || !name || !Number.isFinite(price_cents)) {
     return res.status(400).json({ error: 'category, name and price_cents are required' });
   }
 
-  const params = [category, name, specs || '', price_cents, condition || 'New', icon || '📦', image_url || CATEGORY_IMAGE[category] || null, stock];
+  const params = [category, name, specs || '', price_cents, condition || 'New', icon || '📦', image_url || CATEGORY_IMAGE[category] || null, stock, barcode || null];
   let imageClause = '';
   if (req.file) {
     const imageData = await normalizeProductPhoto(req.file.buffer);
@@ -494,18 +591,67 @@ app.put('/api/admin/products/:id', requireAdmin, requireDb, upload.single('image
   }
   params.push(id);
 
-  const { rows } = await pool.query(
-    `UPDATE products SET category=$1, name=$2, specs=$3, price_cents=$4, condition=$5, icon=$6, image_url=$7, stock=$8, updated_at=now()${imageClause}
-     WHERE id = $${params.length} RETURNING ${PRODUCT_COLUMNS}`,
-    params
-  );
-  if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-  res.json(withImageSrc(rows[0]));
+  try {
+    const { rows } = await pool.query(
+      `UPDATE products SET category=$1, name=$2, specs=$3, price_cents=$4, condition=$5, icon=$6, image_url=$7, stock=$8, barcode=$9, updated_at=now()${imageClause}
+       WHERE id = $${params.length} RETURNING ${PRODUCT_COLUMNS}`,
+      params
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(withImageSrc(rows[0]));
+  } catch (err) {
+    if (err.code === '23505') return res.status(400).json({ error: 'That barcode is already assigned to another product.' });
+    throw err;
+  }
 });
 
 app.delete('/api/admin/products/:id', requireAdmin, requireDb, async (req, res) => {
   const { id } = req.params;
   const { rowCount } = await pool.query('DELETE FROM products WHERE id=$1', [id]);
+  if (!rowCount) return res.status(404).json({ error: 'Not found' });
+  res.status(204).end();
+});
+
+/* ---------- Admin API — owner + staff: services catalog ---------- */
+app.get('/api/admin/services', requireAdmin, requireDb, async (req, res) => {
+  const { rows } = await pool.query(`SELECT ${SERVICE_COLUMNS} FROM services ORDER BY name`);
+  res.json(rows);
+});
+
+app.post('/api/admin/services', requireAdmin, requireDb, async (req, res) => {
+  const { name, description, icon } = req.body || {};
+  const price_cents = Math.round(parseFloat(req.body?.price_cents));
+  const active = req.body?.active !== false;
+  if (!name || !Number.isFinite(price_cents)) {
+    return res.status(400).json({ error: 'name and price_cents are required' });
+  }
+  const { rows } = await pool.query(
+    `INSERT INTO services (name, description, price_cents, icon, active) VALUES ($1,$2,$3,$4,$5) RETURNING ${SERVICE_COLUMNS}`,
+    [name, description || '', price_cents, icon || '🛠️', active]
+  );
+  res.status(201).json(rows[0]);
+});
+
+app.put('/api/admin/services/:id', requireAdmin, requireDb, async (req, res) => {
+  const { id } = req.params;
+  const { name, description, icon } = req.body || {};
+  const price_cents = Math.round(parseFloat(req.body?.price_cents));
+  const active = req.body?.active !== false;
+  if (!name || !Number.isFinite(price_cents)) {
+    return res.status(400).json({ error: 'name and price_cents are required' });
+  }
+  const { rows } = await pool.query(
+    `UPDATE services SET name=$1, description=$2, price_cents=$3, icon=$4, active=$5, updated_at=now()
+     WHERE id = $6 RETURNING ${SERVICE_COLUMNS}`,
+    [name, description || '', price_cents, icon || '🛠️', active, id]
+  );
+  if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+  res.json(rows[0]);
+});
+
+app.delete('/api/admin/services/:id', requireAdmin, requireDb, async (req, res) => {
+  const { id } = req.params;
+  const { rowCount } = await pool.query('DELETE FROM services WHERE id=$1', [id]);
   if (!rowCount) return res.status(404).json({ error: 'Not found' });
   res.status(204).end();
 });
@@ -592,7 +738,8 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
     }
     total += price_cents * quantity;
     const productId = Number.isFinite(Number(item.product_id)) ? Number(item.product_id) : null;
-    cleanItems.push({ productId, name, price_cents, quantity });
+    const serviceId = Number.isFinite(Number(item.service_id)) ? Number(item.service_id) : null;
+    cleanItems.push({ productId, serviceId, name, price_cents, quantity });
   }
 
   const syntheticSessionId = `instore-${crypto.randomUUID()}`;
@@ -606,15 +753,22 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
   const itemRows = [];
   for (const it of cleanItems) {
     await pool.query(
-      'INSERT INTO order_items (order_id, product_id, name, price_cents, quantity) VALUES ($1,$2,$3,$4,$5)',
-      [order.id, it.productId, it.name, it.price_cents, it.quantity]
+      'INSERT INTO order_items (order_id, product_id, service_id, name, price_cents, quantity) VALUES ($1,$2,$3,$4,$5,$6)',
+      [order.id, it.productId, it.serviceId, it.name, it.price_cents, it.quantity]
     );
-    itemRows.push({ name: it.name, price_cents: it.price_cents, quantity: it.quantity });
+    itemRows.push({ name: it.name, price_cents: it.price_cents, quantity: it.quantity, is_service: !!it.serviceId });
     if (it.productId) {
-      await pool.query('UPDATE products SET stock = GREATEST(stock - $1, 0) WHERE id = $2', [it.quantity, it.productId]);
+      const { rows: stockRows } = await pool.query(
+        'UPDATE products SET stock = GREATEST(stock - $1, 0) WHERE id = $2 RETURNING name, stock',
+        [it.quantity, it.productId]
+      );
+      if (stockRows[0] && stockRows[0].stock <= LOW_STOCK_THRESHOLD) {
+        broadcastEvent('low_stock', { name: stockRows[0].name, stock: stockRows[0].stock });
+      }
     }
   }
 
+  broadcastEvent('sale', { channel: 'in_store', total_cents: order.total_cents, items: itemRows });
   res.status(201).json({ order, items: itemRows });
 });
 
@@ -630,6 +784,61 @@ app.put('/api/admin/inquiries/:id/status', requireAdmin, requireDb, async (req, 
   const { rows } = await pool.query('UPDATE inquiries SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found' });
   res.json(rows[0]);
+});
+
+/* ---------- Admin API — owner only: AI store insights ---------- */
+let insightsCache = { text: null, generatedAt: null };
+
+app.get('/api/admin/insights', requireOwner, requireDb, (req, res) => {
+  res.json(insightsCache);
+});
+
+app.post('/api/admin/insights', requireOwner, requireDb, requireAnthropic, async (req, res) => {
+  const [todayRes, weekRes, lastWeekRes, topItemsRes, lowStockRes, servicesRes] = await Promise.all([
+    pool.query(`SELECT COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS orders FROM orders WHERE created_at >= date_trunc('day', now())`),
+    pool.query(`SELECT COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS orders FROM orders WHERE created_at >= now() - interval '7 days'`),
+    pool.query(`SELECT COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS orders FROM orders WHERE created_at >= now() - interval '14 days' AND created_at < now() - interval '7 days'`),
+    pool.query(`
+      SELECT oi.name, SUM(oi.quantity)::int AS quantity
+      FROM order_items oi JOIN orders o ON o.id = oi.order_id
+      WHERE o.created_at >= now() - interval '7 days'
+      GROUP BY oi.name ORDER BY quantity DESC LIMIT 5
+    `),
+    pool.query('SELECT name, stock FROM products WHERE stock <= $1 ORDER BY stock ASC LIMIT 10', [LOW_STOCK_THRESHOLD]),
+    pool.query(`
+      SELECT oi.name, SUM(oi.quantity)::int AS quantity
+      FROM order_items oi JOIN orders o ON o.id = oi.order_id
+      WHERE o.created_at >= now() - interval '7 days' AND oi.service_id IS NOT NULL
+      GROUP BY oi.name ORDER BY quantity DESC LIMIT 5
+    `),
+  ]);
+
+  const snapshot = {
+    today: todayRes.rows[0],
+    last7Days: weekRes.rows[0],
+    previous7Days: lastWeekRes.rows[0],
+    topSellingItems7d: topItemsRes.rows,
+    lowStockProducts: lowStockRes.rows,
+    servicesLogged7d: servicesRes.rows,
+  };
+
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-5',
+    max_tokens: 400,
+    system:
+      'You are a store operations assistant for a phone/computer repair and resale shop. Given a JSON snapshot of ' +
+      'today\'s and this week\'s sales, top-selling items, low-stock products and repair services logged, write a short, ' +
+      'plain-English summary for the owner: 3-5 bullet points (use "-" not markdown headers), covering notable sales ' +
+      'trends and anything worth restocking or watching. No preamble, no closing remarks, just the bullets.',
+    messages: [{ role: 'user', content: JSON.stringify(snapshot) }],
+  });
+
+  const textBlock = message.content.find((b) => b.type === 'text');
+  insightsCache = {
+    text: textBlock && textBlock.type === 'text' ? textBlock.text.trim() : 'No insights available.',
+    generatedAt: new Date().toISOString(),
+  };
+  res.json(insightsCache);
 });
 
 app.get('/admin', (req, res) => {

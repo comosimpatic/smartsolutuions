@@ -52,7 +52,7 @@
     <div class="owner-elevate-overlay" id="owner-elevate-overlay" hidden>
       <form class="owner-elevate-card" id="owner-elevate-form">
         <h3>Owner sign-in</h3>
-        <p>Enter the owner password to unlock Overview and Products.</p>
+        <p>Enter the owner password to unlock the live dashboard.</p>
         <input type="password" id="owner-elevate-password" autocomplete="off" required>
         <p class="admin-error" id="owner-elevate-error"></p>
         <div class="owner-elevate-actions">
@@ -67,8 +67,9 @@
 
       <div class="admin-tabs" id="admin-tabs">
         <button type="button" class="admin-tab" id="tab-sale" data-staff-only>Record a sale</button>
-        <button type="button" class="admin-tab" id="tab-overview" data-owner-only>Overview</button>
+        <button type="button" class="admin-tab" id="tab-overview" data-owner-only>Live dashboard</button>
         <button type="button" class="admin-tab" id="tab-products">Products</button>
+        <button type="button" class="admin-tab" id="tab-services">Services</button>
         <button type="button" class="admin-tab" id="tab-inquiries">Inquiries</button>
       </div>
 
@@ -76,6 +77,10 @@
       <div id="sale-panel">
         <div class="admin-section-head"><h2>Record an in-store sale</h2></div>
         <div class="admin-form-card">
+          <div class="admin-field" style="margin-bottom: 20px;">
+            <label for="sale-scan-input">Scan barcode</label>
+            <input type="text" id="sale-scan-input" placeholder="Scan an item, or click a line below to pick one manually" autocomplete="off">
+          </div>
           <form id="sale-form">
             <div class="admin-form-grid">
               <div class="admin-field">
@@ -116,9 +121,39 @@
         </div>
       </div>
 
-      <!-- ============ Overview (owner only) ============ -->
+      <!-- ============ Overview / live dashboard (owner only) ============ -->
       <div id="overview-panel" hidden>
         <div class="admin-stats" id="stats-row"></div>
+
+        <div class="live-dash-grid">
+          <div>
+            <div class="admin-section-head"><h2>Live activity</h2><span class="live-dot" id="live-dot" title="Live feed"></span></div>
+            <div class="admin-table-wrap live-feed-wrap">
+              <ul class="live-feed" id="live-feed"><li class="live-feed-empty">Waiting for activity…</li></ul>
+            </div>
+          </div>
+          <div>
+            <div class="admin-section-head">
+              <h2>AI insights</h2>
+              <button type="button" class="btn btn-ghost" id="insights-refresh-btn" style="padding:6px 14px;font-size:0.82rem;">Refresh insights</button>
+            </div>
+            <div class="admin-form-card insights-card" id="insights-card">
+              <p class="insights-empty" id="insights-empty">No insights generated yet.</p>
+              <div class="insights-text" id="insights-text" hidden></div>
+              <p class="insights-meta" id="insights-meta"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-section-head">
+          <h2>Low stock</h2>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Product</th><th>Stock</th></tr></thead>
+            <tbody id="low-stock-rows"></tbody>
+          </table>
+        </div>
 
         <div class="admin-section-head">
           <h2>All orders</h2>
@@ -199,6 +234,7 @@
                 <th>Condition</th>
                 <th>Price</th>
                 <th>Stock</th>
+                <th>Barcode</th>
                 <th></th>
               </tr>
             </thead>
@@ -248,6 +284,14 @@
                 <label for="field-icon">Icon (emoji fallback)</label>
                 <input type="text" id="field-icon" maxlength="4" placeholder="📱">
               </div>
+              <div class="admin-field">
+                <label for="field-barcode">Barcode</label>
+                <input type="text" id="field-barcode" placeholder="Scan or type a code" autocomplete="off">
+              </div>
+              <div class="admin-field">
+                <label>&nbsp;</label>
+                <button type="button" class="btn btn-ghost" id="field-barcode-generate" style="width:100%;">Generate code</button>
+              </div>
               <div class="admin-field span-2">
                 <label for="field-image-file">Product photo</label>
                 <input type="file" id="field-image-file" accept="image/*">
@@ -265,6 +309,62 @@
               <button type="submit" class="btn btn-primary" id="form-submit-btn">Add product</button>
               <button type="button" class="btn btn-ghost" id="form-cancel-btn" hidden>Cancel edit</button>
               <p class="admin-toast" id="form-toast"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ============ Services (owner + staff) ============ -->
+      <div id="services-panel" hidden>
+        <div class="admin-section-head">
+          <h2>Services</h2>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Active</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="service-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="admin-section-head">
+          <h2 id="service-form-heading">Add a service</h2>
+        </div>
+        <div class="admin-form-card">
+          <form id="service-form">
+            <input type="hidden" id="service-id">
+            <div class="admin-form-grid">
+              <div class="admin-field span-2">
+                <label for="service-field-name">Name</label>
+                <input type="text" id="service-field-name" required>
+              </div>
+              <div class="admin-field span-2">
+                <label for="service-field-description">Description</label>
+                <input type="text" id="service-field-description" placeholder="e.g. Cracked or unresponsive screen replacement">
+              </div>
+              <div class="admin-field">
+                <label for="service-field-price">Price (USD)</label>
+                <input type="number" id="service-field-price" min="0" step="0.01" required>
+              </div>
+              <div class="admin-field">
+                <label for="service-field-icon">Icon (emoji fallback)</label>
+                <input type="text" id="service-field-icon" maxlength="4" placeholder="🛠️">
+              </div>
+              <div class="admin-field">
+                <label><input type="checkbox" id="service-field-active" checked> Active (offered for sale)</label>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <button type="submit" class="btn btn-primary" id="service-form-submit-btn">Add service</button>
+              <button type="button" class="btn btn-ghost" id="service-form-cancel-btn" hidden>Cancel edit</button>
+              <p class="admin-toast" id="service-form-toast"></p>
             </div>
           </form>
         </div>

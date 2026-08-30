@@ -25,6 +25,7 @@
   const fieldPrice = document.getElementById('field-price');
   const fieldStock = document.getElementById('field-stock');
   const fieldIcon = document.getElementById('field-icon');
+  const fieldBarcode = document.getElementById('field-barcode');
   const fieldImage = document.getElementById('field-image');
   const fieldImageFile = document.getElementById('field-image-file');
   const fieldImageRemove = document.getElementById('field-image-remove');
@@ -64,6 +65,7 @@
     sale: { btn: 'tab-sale', panel: 'sale-panel' },
     overview: { btn: 'tab-overview', panel: 'overview-panel' },
     products: { btn: 'tab-products', panel: 'products-panel' },
+    services: { btn: 'tab-services', panel: 'services-panel' },
     inquiries: { btn: 'tab-inquiries', panel: 'inquiries-panel' },
   };
 
@@ -72,8 +74,9 @@
       document.getElementById(btn).classList.toggle('active', key === name);
       document.getElementById(panel).hidden = key !== name;
     });
-    if (name === 'overview') { loadOverview(); loadOrders(); }
+    if (name === 'overview') { loadOverview(); loadOrders(); loadInsights(); }
     if (name === 'products') { loadProducts(); loadPromo(); }
+    if (name === 'services') { loadServices(); }
     if (name === 'sale') { loadSaleProducts(); }
     if (name === 'inquiries') { loadInquiries(); }
   }
@@ -81,6 +84,7 @@
   document.getElementById('tab-sale').addEventListener('click', () => activateTab('sale'));
   document.getElementById('tab-overview').addEventListener('click', () => activateTab('overview'));
   document.getElementById('tab-products').addEventListener('click', () => activateTab('products'));
+  document.getElementById('tab-services').addEventListener('click', () => activateTab('services'));
   document.getElementById('tab-inquiries').addEventListener('click', () => activateTab('inquiries'));
 
   function showDashboard(role) {
@@ -91,6 +95,7 @@
     document.querySelectorAll('[data-owner-only]').forEach((el) => { el.hidden = role !== 'owner'; });
     document.querySelectorAll('[data-staff-only]').forEach((el) => { el.hidden = role !== 'staff'; });
     activateTab(role === 'owner' ? 'overview' : 'sale');
+    if (role === 'owner') connectLiveFeed();
   }
 
   /* ============ Owner sign-in (second layer) ============ */
@@ -151,6 +156,92 @@
     showLogin();
   });
 
+  /* ============ Live feed (owner, Server-Sent Events) ============ */
+  let liveEventSource = null;
+  let liveFeedEvents = [];
+  const LIVE_FEED_MAX = 25;
+
+  function connectLiveFeed() {
+    if (liveEventSource) return;
+    liveEventSource = new EventSource('/api/admin/events');
+    const dot = document.getElementById('live-dot');
+    liveEventSource.addEventListener('open', () => { if (dot) dot.classList.remove('offline'); });
+    liveEventSource.addEventListener('error', () => { if (dot) dot.classList.add('offline'); });
+    liveEventSource.addEventListener('message', (e) => {
+      let evt;
+      try { evt = JSON.parse(e.data); } catch (_) { return; }
+      liveFeedEvents.unshift(evt);
+      if (liveFeedEvents.length > LIVE_FEED_MAX) liveFeedEvents.length = LIVE_FEED_MAX;
+      renderLiveFeed();
+      if (evt.type === 'sale' || evt.type === 'low_stock') { loadOverview(); }
+    });
+  }
+
+  function renderLiveFeed() {
+    const feed = document.getElementById('live-feed');
+    if (!feed) return;
+    if (!liveFeedEvents.length) {
+      feed.innerHTML = '<li class="live-feed-empty">Waiting for activity…</li>';
+      return;
+    }
+    feed.innerHTML = liveFeedEvents.map((evt) => {
+      const time = new Date(evt.at).toLocaleTimeString();
+      if (evt.type === 'sale') {
+        const summary = (evt.items || []).map((i) => `${i.quantity}× ${escapeHtml(i.name)}`).join(', ');
+        const channelLabel = evt.channel === 'in_store' ? 'In-store sale' : 'Online sale';
+        return `<li><span>${channelLabel}: ${summary} — ${money(evt.total_cents)}</span><span class="live-feed-time">${time}</span></li>`;
+      }
+      if (evt.type === 'low_stock') {
+        return `<li class="low-stock"><span>Stock low: ${escapeHtml(evt.name)} (${evt.stock} left)</span><span class="live-feed-time">${time}</span></li>`;
+      }
+      return '';
+    }).join('');
+  }
+
+  /* ============ AI insights (owner) ============ */
+  async function loadInsights() {
+    try {
+      const data = await api('/api/admin/insights');
+      renderInsights(data);
+    } catch (err) {
+      document.getElementById('insights-empty').textContent = err.message;
+    }
+  }
+
+  function renderInsights(data) {
+    const empty = document.getElementById('insights-empty');
+    const textEl = document.getElementById('insights-text');
+    const meta = document.getElementById('insights-meta');
+    if (data && data.text) {
+      empty.hidden = true;
+      textEl.hidden = false;
+      textEl.textContent = data.text;
+      meta.textContent = `Generated ${new Date(data.generatedAt).toLocaleString()}`;
+    } else {
+      empty.hidden = false;
+      textEl.hidden = true;
+      meta.textContent = '';
+    }
+  }
+
+  document.getElementById('insights-refresh-btn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Generating…';
+    try {
+      const data = await api('/api/admin/insights', { method: 'POST' });
+      renderInsights(data);
+    } catch (err) {
+      document.getElementById('insights-empty').hidden = false;
+      document.getElementById('insights-empty').textContent = err.message;
+      document.getElementById('insights-text').hidden = true;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+
   /* ============ Overview (owner) ============ */
   async function loadOverview() {
     try {
@@ -158,13 +249,17 @@
       const byCategory = Object.fromEntries(data.byCategory.map((c) => [c.category, c.count]));
       const lastUpdated = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : '—';
       statsRow.innerHTML = `
+        <div class="admin-stat"><div class="num">${money(data.revenueTodayCents)}</div><div class="label">Revenue (today)</div></div>
+        <div class="admin-stat"><div class="num">${data.ordersToday}</div><div class="label">Orders (today)</div></div>
         <div class="admin-stat"><div class="num">${money(data.revenue30dCents)}</div><div class="label">Revenue (30 days)</div></div>
         <div class="admin-stat"><div class="num">${data.orders30d}</div><div class="label">Orders (30 days)</div></div>
         <div class="admin-stat"><div class="num">${data.totalProducts}</div><div class="label">Total products</div></div>
-        <div class="admin-stat"><div class="num">${byCategory.phones || 0}</div><div class="label">Phones</div></div>
-        <div class="admin-stat"><div class="num">${byCategory.laptops || 0}</div><div class="label">Laptops</div></div>
-        <div class="admin-stat"><div class="num" style="font-size:1rem;">${lastUpdated}</div><div class="label">Catalog updated</div></div>
+        <div class="admin-stat"><div class="num">${data.lowStock.length}</div><div class="label">Low stock items</div></div>
       `;
+      const lowStockRows = document.getElementById('low-stock-rows');
+      lowStockRows.innerHTML = data.lowStock.map((p) => `
+        <tr><td>${escapeHtml(p.name)}</td><td>${p.stock}</td></tr>
+      `).join('') || '<tr><td colspan="2">Nothing low on stock.</td></tr>';
     } catch (err) {
       statsRow.innerHTML = `<p class="admin-error">${err.message}</p>`;
     }
@@ -328,6 +423,7 @@
           <td>${escapeHtml(p.condition)}</td>
           <td>${money(p.price_cents)}</td>
           <td>${p.stock}</td>
+          <td>${escapeHtml(p.barcode || '—')}</td>
           <td>
             <div class="admin-row-actions">
               <button type="button" data-action="edit">Edit</button>
@@ -335,7 +431,7 @@
             </div>
           </td>
         </tr>
-      `).join('') || '<tr><td colspan="8">No products yet.</td></tr>';
+      `).join('') || '<tr><td colspan="9">No products yet.</td></tr>';
 
       productRows.querySelectorAll('[data-action="edit"]').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -351,7 +447,7 @@
         });
       });
     } catch (err) {
-      productRows.innerHTML = `<tr><td colspan="8" class="admin-error">${err.message}</td></tr>`;
+      productRows.innerHTML = `<tr><td colspan="9" class="admin-error">${err.message}</td></tr>`;
     }
   }
 
@@ -364,6 +460,7 @@
     fieldPrice.value = (p.price_cents / 100).toFixed(2);
     fieldStock.value = p.stock;
     fieldIcon.value = p.icon || '';
+    fieldBarcode.value = p.barcode || '';
     fieldImage.value = p.image_url || '';
     fieldImageFile.value = '';
     fieldImageRemove.checked = false;
@@ -405,6 +502,7 @@
     fd.append('price_cents', String(Math.round(parseFloat(fieldPrice.value) * 100)));
     fd.append('stock', fieldStock.value.trim() || '25');
     fd.append('icon', fieldIcon.value.trim() || '📦');
+    fd.append('barcode', fieldBarcode.value.trim());
     fd.append('image_url', fieldImage.value.trim());
     if (fieldImageFile.files[0]) fd.append('image', fieldImageFile.files[0]);
     if (fieldImageRemove.checked) fd.append('remove_image', 'true');
@@ -426,6 +524,10 @@
     }
   });
 
+  document.getElementById('field-barcode-generate').addEventListener('click', () => {
+    fieldBarcode.value = `SS-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  });
+
   async function deleteProduct(id) {
     if (!confirm('Delete this product? This cannot be undone.')) return;
     try {
@@ -436,20 +538,142 @@
     }
   }
 
+  /* ============ Services (owner + staff) ============ */
+  const serviceRows = document.getElementById('service-rows');
+  const serviceForm = document.getElementById('service-form');
+  const serviceFormHeading = document.getElementById('service-form-heading');
+  const serviceFormSubmitBtn = document.getElementById('service-form-submit-btn');
+  const serviceFormCancelBtn = document.getElementById('service-form-cancel-btn');
+  const serviceFormToast = document.getElementById('service-form-toast');
+  const serviceFieldId = document.getElementById('service-id');
+  const serviceFieldName = document.getElementById('service-field-name');
+  const serviceFieldDescription = document.getElementById('service-field-description');
+  const serviceFieldPrice = document.getElementById('service-field-price');
+  const serviceFieldIcon = document.getElementById('service-field-icon');
+  const serviceFieldActive = document.getElementById('service-field-active');
+
+  async function loadServices() {
+    try {
+      const services = await api('/api/admin/services');
+      serviceRows.innerHTML = services.map((s) => `
+        <tr data-id="${s.id}">
+          <td>${s.icon ? `${escapeHtml(s.icon)} ` : ''}${escapeHtml(s.name)}</td>
+          <td class="specs-cell">${escapeHtml(s.description || '')}</td>
+          <td>${money(s.price_cents)}</td>
+          <td>${s.active ? 'Yes' : 'No'}</td>
+          <td>
+            <div class="admin-row-actions">
+              <button type="button" data-action="edit">Edit</button>
+              <button type="button" data-action="delete" class="danger">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="5">No services yet.</td></tr>';
+
+      serviceRows.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.closest('tr').dataset.id);
+          const s = services.find((x) => x.id === id);
+          if (s) startEditService(s);
+        });
+      });
+      serviceRows.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.closest('tr').dataset.id);
+          deleteService(id);
+        });
+      });
+    } catch (err) {
+      serviceRows.innerHTML = `<tr><td colspan="5" class="admin-error">${err.message}</td></tr>`;
+    }
+  }
+
+  function startEditService(s) {
+    serviceFieldId.value = s.id;
+    serviceFieldName.value = s.name;
+    serviceFieldDescription.value = s.description || '';
+    serviceFieldPrice.value = (s.price_cents / 100).toFixed(2);
+    serviceFieldIcon.value = s.icon || '';
+    serviceFieldActive.checked = !!s.active;
+    serviceFormHeading.textContent = `Editing: ${s.name}`;
+    serviceFormSubmitBtn.textContent = 'Save changes';
+    serviceFormCancelBtn.hidden = false;
+    serviceForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function resetServiceForm() {
+    serviceForm.reset();
+    serviceFieldId.value = '';
+    serviceFieldActive.checked = true;
+    serviceFormHeading.textContent = 'Add a service';
+    serviceFormSubmitBtn.textContent = 'Add service';
+    serviceFormCancelBtn.hidden = true;
+  }
+
+  serviceFormCancelBtn.addEventListener('click', resetServiceForm);
+
+  serviceForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    serviceFormToast.textContent = '';
+    serviceFormToast.className = 'admin-toast';
+
+    const payload = {
+      name: serviceFieldName.value.trim(),
+      description: serviceFieldDescription.value.trim(),
+      price_cents: Math.round(parseFloat(serviceFieldPrice.value) * 100),
+      icon: serviceFieldIcon.value.trim() || '🛠️',
+      active: serviceFieldActive.checked,
+    };
+
+    try {
+      const url = serviceFieldId.value ? `/api/admin/services/${serviceFieldId.value}` : '/api/admin/services';
+      const method = serviceFieldId.value ? 'PUT' : 'POST';
+      await api(url, { method, body: JSON.stringify(payload) });
+      serviceFormToast.textContent = serviceFieldId.value ? 'Service updated.' : 'Service added.';
+      serviceFormToast.classList.add('ok');
+      resetServiceForm();
+      loadServices();
+    } catch (err) {
+      serviceFormToast.textContent = err.message;
+      serviceFormToast.classList.add('err');
+    }
+  });
+
+  async function deleteService(id) {
+    if (!confirm('Delete this service? This cannot be undone.')) return;
+    try {
+      await fetch(`/api/admin/services/${id}`, { method: 'DELETE' });
+      loadServices();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   /* ============ Record a sale (owner + staff) ============ */
   let saleProducts = [];
+  let saleServices = [];
   let saleLines = [];
 
-  function newLine() { return { product_id: '', name: '', price_cents: 0, quantity: 1 }; }
+  function newLine() { return { product_id: '', service_id: '', name: '', price_cents: 0, quantity: 1 }; }
 
   async function loadSaleProducts() {
     try {
-      saleProducts = await api('/api/admin/products');
+      [saleProducts, saleServices] = await Promise.all([
+        api('/api/admin/products'),
+        api('/api/admin/services'),
+      ]);
     } catch (_) {
       saleProducts = [];
+      saleServices = [];
     }
     if (!saleLines.length) saleLines = [newLine()];
     renderSaleLines();
+  }
+
+  function selectValue(line) {
+    if (line.product_id) return `p-${line.product_id}`;
+    if (line.service_id) return `s-${line.service_id}`;
+    return '';
   }
 
   function renderSaleLines() {
@@ -458,9 +682,14 @@
       <div class="sale-line" data-idx="${idx}">
         <select class="sale-line-product">
           <option value="">Custom item…</option>
-          ${saleProducts.map((p) => `<option value="${p.id}" ${String(p.id) === String(line.product_id) ? 'selected' : ''}>${escapeHtml(p.name)} — ${money(p.price_cents)} (stock ${p.stock})</option>`).join('')}
+          <optgroup label="Products">
+            ${saleProducts.map((p) => `<option value="p-${p.id}" ${selectValue(line) === `p-${p.id}` ? 'selected' : ''}>${escapeHtml(p.name)} — ${money(p.price_cents)} (stock ${p.stock})</option>`).join('')}
+          </optgroup>
+          <optgroup label="Services">
+            ${saleServices.filter((s) => s.active).map((s) => `<option value="s-${s.id}" ${selectValue(line) === `s-${s.id}` ? 'selected' : ''}>${escapeHtml(s.name)} — ${money(s.price_cents)}</option>`).join('')}
+          </optgroup>
         </select>
-        <input type="text" class="sale-line-name" placeholder="Item name" value="${escapeHtml(line.name)}" ${line.product_id ? 'readonly' : ''}>
+        <input type="text" class="sale-line-name" placeholder="Item name" value="${escapeHtml(line.name)}" ${line.product_id || line.service_id ? 'readonly' : ''}>
         <input type="number" class="sale-line-qty" min="1" step="1" value="${line.quantity}">
         <input type="number" class="sale-line-price" min="0" step="0.01" value="${(line.price_cents / 100).toFixed(2)}">
         <button type="button" class="sale-line-remove" aria-label="Remove line">✕</button>
@@ -470,12 +699,15 @@
     container.querySelectorAll('.sale-line').forEach((row) => {
       const idx = Number(row.dataset.idx);
       row.querySelector('.sale-line-product').addEventListener('change', (e) => {
-        const pid = e.target.value;
-        if (pid) {
-          const p = saleProducts.find((x) => String(x.id) === pid);
-          saleLines[idx] = { ...saleLines[idx], product_id: pid, name: p.name, price_cents: p.price_cents };
+        const val = e.target.value;
+        if (val.startsWith('p-')) {
+          const p = saleProducts.find((x) => String(x.id) === val.slice(2));
+          saleLines[idx] = { ...saleLines[idx], product_id: p.id, service_id: '', name: p.name, price_cents: p.price_cents };
+        } else if (val.startsWith('s-')) {
+          const s = saleServices.find((x) => String(x.id) === val.slice(2));
+          saleLines[idx] = { ...saleLines[idx], product_id: '', service_id: s.id, name: s.name, price_cents: s.price_cents };
         } else {
-          saleLines[idx] = { ...saleLines[idx], product_id: '', name: '' };
+          saleLines[idx] = { ...saleLines[idx], product_id: '', service_id: '', name: '' };
         }
         renderSaleLines();
         updateSaleTotal();
@@ -510,6 +742,34 @@
     renderSaleLines();
   });
 
+  document.getElementById('sale-scan-input').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const input = e.target;
+    const code = input.value.trim();
+    input.value = '';
+    if (!code) return;
+
+    const product = saleProducts.find((p) => p.barcode && p.barcode === code);
+    if (!product) {
+      alert(`No product found with barcode "${code}".`);
+      return;
+    }
+
+    const existing = saleLines.find((l) => String(l.product_id) === String(product.id));
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      const blank = saleLines.find((l) => !l.product_id && !l.service_id && !l.name.trim());
+      const line = { product_id: product.id, service_id: '', name: product.name, price_cents: product.price_cents, quantity: 1 };
+      if (blank) Object.assign(blank, line);
+      else saleLines.push(line);
+    }
+    renderSaleLines();
+    updateSaleTotal();
+    input.focus();
+  });
+
   document.getElementById('sale-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const toast = document.getElementById('sale-toast');
@@ -518,7 +778,7 @@
 
     const items = saleLines
       .filter((l) => l.name.trim() && l.price_cents >= 0 && l.quantity > 0)
-      .map((l) => ({ product_id: l.product_id || null, name: l.name.trim(), price_cents: l.price_cents, quantity: l.quantity }));
+      .map((l) => ({ product_id: l.product_id || null, service_id: l.service_id || null, name: l.name.trim(), price_cents: l.price_cents, quantity: l.quantity }));
 
     if (!items.length) {
       toast.textContent = 'Add at least one line item.';
