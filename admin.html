@@ -67,11 +67,11 @@
 
       <div class="admin-tabs" id="admin-tabs">
         <button type="button" class="admin-tab" id="tab-sale" data-staff-only>Record a sale</button>
-        <button type="button" class="admin-tab" id="tab-overview" data-owner-only>Live dashboard</button>
-        <button type="button" class="admin-tab" id="tab-products">Products</button>
+        <button type="button" class="admin-tab" id="tab-overview" data-owner-only>SSDC</button>
         <button type="button" class="admin-tab" id="tab-services">Services</button>
         <button type="button" class="admin-tab" id="tab-inquiries">Inquiries</button>
         <button type="button" class="admin-tab" id="tab-settings" data-owner-only>Settings</button>
+        <button type="button" class="admin-tab" id="tab-products">Inventory</button>
       </div>
 
       <!-- ============ Record a sale (staff only) ============ -->
@@ -122,9 +122,10 @@
         </div>
       </div>
 
-      <!-- ============ Overview / live dashboard (owner only) ============ -->
+      <!-- ============ Smart Solutions Data Centre / SSDC (owner only) ============ -->
       <div id="overview-panel" hidden>
-        <div class="admin-stats" id="stats-row"></div>
+        <div class="admin-section-head"><h2>Smart Solutions Data Centre <span style="color:var(--text-faint); font-weight:600;">(SSDC)</span></h2></div>
+        <div class="banner-cards" id="stats-row"></div>
 
         <div class="live-dash-grid">
           <div>
@@ -178,7 +179,7 @@
         </div>
       </div>
 
-      <!-- ============ Products (owner + staff) ============ -->
+      <!-- ============ Inventory (owner + staff) ============ -->
       <div id="products-panel" hidden>
         <div class="admin-section-head">
           <h2>Storefront promo banner</h2>
@@ -222,53 +223,64 @@
         </div>
 
         <div class="admin-section-head">
-          <h2>Products</h2>
+          <h2>Inventory</h2>
         </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Specs</th>
-                <th>Condition</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Barcode</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="product-rows"></tbody>
-          </table>
+        <div class="inventory-summary">
+          <div class="donut" id="inventory-donut"><div class="donut-hole"><div class="num" id="inventory-donut-total">0</div><div class="label">in stock</div></div></div>
+          <div class="donut-legend" id="inventory-legend"></div>
         </div>
+        <div class="banner-cards" id="inventory-cards"></div>
 
-        <div class="admin-section-head">
-          <h2 id="form-heading">Add a product</h2>
-        </div>
-        <div class="admin-form-card">
-          <form id="product-form">
-            <input type="hidden" id="product-id">
-            <div class="admin-form-grid">
-              <div class="admin-field span-2">
-                <label for="field-name">Name</label>
-                <input type="text" id="field-name" required>
-              </div>
-              <div class="admin-field">
-                <label for="field-category">Category</label>
-                <select id="field-category">
-                  <option value="phones">Phones</option>
-                  <option value="laptops">Laptops</option>
-                  <option value="parts">Parts &amp; accessories</option>
-                </select>
-              </div>
-              <div class="admin-field">
-                <label for="field-condition">Condition</label>
-                <select id="field-condition">
-                  <option>New</option>
-                  <option>Certified Refurbished</option>
-                </select>
-              </div>
+        <div id="inventory-detail" hidden>
+          <button type="button" class="inventory-back" id="inventory-back">← All categories</button>
+          <div class="admin-section-head">
+            <h2 id="inventory-detail-heading">Category</h2>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Specs</th>
+                  <th>Condition</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Barcode</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="product-rows"></tbody>
+            </table>
+          </div>
+
+          <div class="admin-section-head">
+            <h2 id="form-heading">Add a product</h2>
+          </div>
+          <div class="admin-form-card">
+            <form id="product-form">
+              <input type="hidden" id="product-id">
+              <div class="admin-form-grid">
+                <div class="admin-field span-2">
+                  <label for="field-name">Name</label>
+                  <input type="text" id="field-name" required>
+                </div>
+                <div class="admin-field">
+                  <label for="field-category">Category</label>
+                  <select id="field-category"></select>
+                </div>
+                <div class="admin-field" id="field-category-new-wrap" hidden>
+                  <label for="field-category-new">New category name</label>
+                  <input type="text" id="field-category-new" placeholder="e.g. tablets">
+                </div>
+                <div class="admin-field">
+                  <label for="field-condition">Condition</label>
+                  <select id="field-condition">
+                    <option>New</option>
+                    <option>Certified Refurbished</option>
+                  </select>
+                </div>
               <div class="admin-field span-2">
                 <label for="field-specs">Specs / description</label>
                 <input type="text" id="field-specs" placeholder="e.g. 256GB storage · Triple camera system">
@@ -312,6 +324,7 @@
               <p class="admin-toast" id="form-toast"></p>
             </div>
           </form>
+          </div>
         </div>
       </div>
 

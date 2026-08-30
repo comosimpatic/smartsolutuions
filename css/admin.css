@@ -328,6 +328,90 @@ table.admin-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
   border-top: 1px solid var(--border);
 }
 
+/* ---- Gradient banner cards ---- */
+:root{
+  --grad-blue: linear-gradient(135deg, #2563eb, #60a5fa);
+  --grad-teal: linear-gradient(135deg, #0d9488, #34d399);
+  --grad-orange: linear-gradient(135deg, #c2660c, #f59e0b);
+  --grad-purple: linear-gradient(135deg, #7c3aed, #a78bfa);
+  --grad-pink: linear-gradient(135deg, #db2777, #f472b6);
+}
+.banner-cards{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.banner-card{
+  background: var(--card-grad, var(--grad-blue));
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 18px 20px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 12px 24px -16px rgba(16,22,43,0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.banner-card:hover{ transform: translateY(-2px); box-shadow: 0 16px 28px -14px rgba(16,22,43,0.4); }
+.banner-card.active{ outline: 2px solid #fff; outline-offset: -4px; }
+.banner-card.static{ cursor: default; }
+.banner-card.static:hover{ transform: none; }
+.banner-card-top{ display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.banner-card-label{ font-size: 0.82rem; font-weight: 600; opacity: 0.92; }
+.banner-card-sparkline{ width: 56px; height: 22px; flex-shrink: 0; opacity: 0.95; }
+.banner-card-num{ font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; }
+.banner-card-sub{ font-size: 0.78rem; opacity: 0.85; }
+
+/* ---- Inventory ---- */
+.inventory-back{
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  margin-bottom: 16px;
+  padding: 0;
+}
+.inventory-summary{
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.donut{
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: conic-gradient(var(--donut-stops, var(--accent) 0 100%));
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.donut-hole{
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.donut-hole .num{ font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; }
+.donut-hole .label{ font-size: 0.7rem; color: var(--text-faint); }
+.donut-legend{ display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; }
+.donut-legend-row{ display: flex; align-items: center; gap: 8px; }
+.donut-legend-dot{ width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
 /* ---- Live dashboard ---- */
 .live-dot{
   width: 9px;

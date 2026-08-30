@@ -35,6 +35,33 @@
   const CATEGORY_LABELS = { phones: 'Phones', laptops: 'Laptops', parts: 'Parts & accessories' };
   const money = (cents) => `$${(cents / 100).toFixed(2)}`;
 
+  const GRADIENT_KEYS = ['grad-blue', 'grad-teal', 'grad-orange', 'grad-purple', 'grad-pink'];
+  const GRADIENT_HEX = { 'grad-blue': '#2563eb', 'grad-teal': '#0d9488', 'grad-orange': '#c2660c', 'grad-purple': '#7c3aed', 'grad-pink': '#db2777' };
+
+  function renderSparkline(points) {
+    const vals = points && points.length ? points : [0];
+    const max = Math.max(...vals, 1);
+    const min = Math.min(...vals, 0);
+    const range = max - min || 1;
+    const w = 56, h = 22;
+    const step = vals.length > 1 ? w / (vals.length - 1) : 0;
+    const coords = vals.map((v, i) => `${(i * step).toFixed(1)},${(h - ((v - min) / range) * h).toFixed(1)}`).join(' ');
+    return `<svg class="banner-card-sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${coords}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+
+  function renderBannerCard({ key, label, num, sub, sparkline, gradient, active, clickable = true }) {
+    return `
+      <button type="button" class="banner-card${active ? ' active' : ''}${clickable ? '' : ' static'}" style="--card-grad: var(--${gradient})" data-key="${escapeHtml(key)}"${clickable ? '' : ' disabled'}>
+        <div class="banner-card-top">
+          <span class="banner-card-label">${escapeHtml(label)}</span>
+          ${sparkline ? renderSparkline(sparkline) : ''}
+        </div>
+        <div class="banner-card-num">${num}</div>
+        <div class="banner-card-sub">${escapeHtml(sub)}</div>
+      </button>
+    `;
+  }
+
   function escapeHtml(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')
@@ -76,7 +103,13 @@
       document.getElementById(panel).hidden = key !== name;
     });
     if (name === 'overview') { loadOverview(); loadOrders(); loadInsights(); }
-    if (name === 'products') { loadProducts(); loadPromo(); }
+    if (name === 'products') {
+      selectedCategory = null;
+      document.getElementById('inventory-detail').hidden = true;
+      loadInventory();
+      loadProducts();
+      loadPromo();
+    }
     if (name === 'services') { loadServices(); }
     if (name === 'sale') { loadSaleProducts(); }
     if (name === 'inquiries') { loadInquiries(); }
@@ -175,7 +208,7 @@
       liveFeedEvents.unshift(evt);
       if (liveFeedEvents.length > LIVE_FEED_MAX) liveFeedEvents.length = LIVE_FEED_MAX;
       renderLiveFeed();
-      if (evt.type === 'sale' || evt.type === 'low_stock') { loadOverview(); }
+      if (evt.type === 'sale' || evt.type === 'low_stock') { loadOverview(); loadInventory(); }
     });
   }
 
@@ -248,16 +281,12 @@
   async function loadOverview() {
     try {
       const data = await api('/api/admin/overview');
-      const byCategory = Object.fromEntries(data.byCategory.map((c) => [c.category, c.count]));
-      const lastUpdated = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : '—';
-      statsRow.innerHTML = `
-        <div class="admin-stat"><div class="num">${money(data.revenueTodayCents)}</div><div class="label">Revenue (today)</div></div>
-        <div class="admin-stat"><div class="num">${data.ordersToday}</div><div class="label">Orders (today)</div></div>
-        <div class="admin-stat"><div class="num">${money(data.revenue30dCents)}</div><div class="label">Revenue (30 days)</div></div>
-        <div class="admin-stat"><div class="num">${data.orders30d}</div><div class="label">Orders (30 days)</div></div>
-        <div class="admin-stat"><div class="num">${data.totalProducts}</div><div class="label">Total products</div></div>
-        <div class="admin-stat"><div class="num">${data.lowStock.length}</div><div class="label">Low stock items</div></div>
-      `;
+      statsRow.innerHTML = [
+        renderBannerCard({ key: 'revenue-today', label: 'Revenue (today)', num: money(data.revenueTodayCents), sub: `${data.ordersToday} orders today`, gradient: 'grad-blue', clickable: false }),
+        renderBannerCard({ key: 'revenue-30d', label: 'Revenue (30 days)', num: money(data.revenue30dCents), sub: `${data.orders30d} orders`, gradient: 'grad-teal', clickable: false }),
+        renderBannerCard({ key: 'total-products', label: 'Total products', num: data.totalProducts, sub: `${data.byCategory.length} categories`, gradient: 'grad-orange', clickable: false }),
+        renderBannerCard({ key: 'low-stock', label: 'Low stock items', num: data.lowStock.length, sub: 'at or below threshold', gradient: 'grad-pink', clickable: false }),
+      ].join('');
       const lowStockRows = document.getElementById('low-stock-rows');
       lowStockRows.innerHTML = data.lowStock.map((p) => `
         <tr><td>${escapeHtml(p.name)}</td><td>${p.stock}</td></tr>
@@ -412,50 +441,152 @@
     }
   });
 
-  /* ============ Products (owner + staff) ============ */
+  /* ============ Inventory (owner + staff) ============ */
+  let allProducts = [];
+  let selectedCategory = null;
+  let inventoryData = { categories: [], services: { count: 0, sales7d: [] } };
+
+  async function loadInventory() {
+    try {
+      inventoryData = await api('/api/admin/inventory');
+      renderInventoryCards();
+      renderInventoryDonut();
+    } catch (err) {
+      document.getElementById('inventory-cards').innerHTML = `<p class="admin-error">${err.message}</p>`;
+    }
+  }
+
+  function renderInventoryCards() {
+    const container = document.getElementById('inventory-cards');
+    const cards = inventoryData.categories.map((c, i) => renderBannerCard({
+      key: c.category,
+      label: CATEGORY_LABELS[c.category] || c.category,
+      num: c.productCount,
+      sub: `${c.totalStock} in stock`,
+      sparkline: c.sales7d,
+      gradient: GRADIENT_KEYS[i % GRADIENT_KEYS.length],
+      active: selectedCategory === c.category,
+    }));
+    cards.push(renderBannerCard({
+      key: '__services__',
+      label: 'Services',
+      num: inventoryData.services.count,
+      sub: 'active services',
+      sparkline: inventoryData.services.sales7d,
+      gradient: GRADIENT_KEYS[inventoryData.categories.length % GRADIENT_KEYS.length],
+    }));
+    container.innerHTML = cards.join('');
+    container.querySelectorAll('.banner-card').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        if (key === '__services__') { activateTab('services'); return; }
+        selectCategory(key);
+      });
+    });
+  }
+
+  function renderInventoryDonut() {
+    const total = inventoryData.categories.reduce((sum, c) => sum + c.totalStock, 0);
+    document.getElementById('inventory-donut-total').textContent = total;
+    const legend = document.getElementById('inventory-legend');
+    const donut = document.getElementById('inventory-donut');
+    if (!total) {
+      donut.style.setProperty('--donut-stops', 'var(--border) 0 100%');
+      legend.innerHTML = '<p style="color:var(--text-faint);">No stock yet.</p>';
+      return;
+    }
+    let acc = 0;
+    const stops = [];
+    const legendRows = [];
+    inventoryData.categories.forEach((c, i) => {
+      const pct = (c.totalStock / total) * 100;
+      const color = GRADIENT_HEX[GRADIENT_KEYS[i % GRADIENT_KEYS.length]];
+      stops.push(`${color} ${acc.toFixed(2)}% ${(acc + pct).toFixed(2)}%`);
+      legendRows.push(`<div class="donut-legend-row"><span class="donut-legend-dot" style="background:${color}"></span>${escapeHtml(CATEGORY_LABELS[c.category] || c.category)} — ${c.totalStock}</div>`);
+      acc += pct;
+    });
+    donut.style.setProperty('--donut-stops', stops.join(', '));
+    legend.innerHTML = legendRows.join('');
+  }
+
+  function selectCategory(category) {
+    selectedCategory = category;
+    document.getElementById('inventory-detail').hidden = false;
+    document.getElementById('inventory-detail-heading').textContent = `${CATEGORY_LABELS[category] || category} — products`;
+    renderInventoryCards();
+    renderProductRows();
+    resetForm();
+  }
+
+  document.getElementById('inventory-back').addEventListener('click', () => {
+    selectedCategory = null;
+    document.getElementById('inventory-detail').hidden = true;
+    renderInventoryCards();
+  });
+
+  function populateCategoryOptions() {
+    const categories = [...new Set(allProducts.map((p) => p.category))].sort();
+    const current = fieldCategory.value;
+    fieldCategory.innerHTML = categories.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(CATEGORY_LABELS[c] || c)}</option>`).join('')
+      + '<option value="__new__">+ New category…</option>';
+    if (categories.includes(current)) fieldCategory.value = current;
+    else if (selectedCategory && categories.includes(selectedCategory)) fieldCategory.value = selectedCategory;
+  }
+
+  fieldCategory.addEventListener('change', () => {
+    document.getElementById('field-category-new-wrap').hidden = fieldCategory.value !== '__new__';
+  });
+
   async function loadProducts() {
     try {
-      const products = await api('/api/admin/products');
-      productRows.innerHTML = products.map((p) => `
-        <tr data-id="${p.id}">
-          <td><img class="admin-thumb" src="${escapeHtml(p.image_src || '')}" alt=""></td>
-          <td>${escapeHtml(p.name)}</td>
-          <td>${CATEGORY_LABELS[p.category] || p.category}</td>
-          <td class="specs-cell">${escapeHtml(p.specs || '')}</td>
-          <td>${escapeHtml(p.condition)}</td>
-          <td>${money(p.price_cents)}</td>
-          <td>${p.stock}</td>
-          <td>${escapeHtml(p.barcode || '—')}</td>
-          <td>
-            <div class="admin-row-actions">
-              <button type="button" data-action="edit">Edit</button>
-              <button type="button" data-action="delete" class="danger">Delete</button>
-            </div>
-          </td>
-        </tr>
-      `).join('') || '<tr><td colspan="9">No products yet.</td></tr>';
-
-      productRows.querySelectorAll('[data-action="edit"]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const id = Number(btn.closest('tr').dataset.id);
-          const p = products.find((x) => x.id === id);
-          if (p) startEdit(p);
-        });
-      });
-      productRows.querySelectorAll('[data-action="delete"]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const id = Number(btn.closest('tr').dataset.id);
-          deleteProduct(id);
-        });
-      });
+      allProducts = await api('/api/admin/products');
+      populateCategoryOptions();
+      if (selectedCategory) renderProductRows();
     } catch (err) {
       productRows.innerHTML = `<tr><td colspan="9" class="admin-error">${err.message}</td></tr>`;
     }
   }
 
+  function renderProductRows() {
+    const filtered = allProducts.filter((p) => p.category === selectedCategory);
+    productRows.innerHTML = filtered.map((p) => `
+      <tr data-id="${p.id}">
+        <td><img class="admin-thumb" src="${escapeHtml(p.image_src || '')}" alt=""></td>
+        <td>${escapeHtml(p.name)}</td>
+        <td>${CATEGORY_LABELS[p.category] || p.category}</td>
+        <td class="specs-cell">${escapeHtml(p.specs || '')}</td>
+        <td>${escapeHtml(p.condition)}</td>
+        <td>${money(p.price_cents)}</td>
+        <td>${p.stock}</td>
+        <td>${escapeHtml(p.barcode || '—')}</td>
+        <td>
+          <div class="admin-row-actions">
+            <button type="button" data-action="edit">Edit</button>
+            <button type="button" data-action="delete" class="danger">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="9">No products in this category yet.</td></tr>';
+
+    productRows.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.closest('tr').dataset.id);
+        const p = allProducts.find((x) => x.id === id);
+        if (p) startEdit(p);
+      });
+    });
+    productRows.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.closest('tr').dataset.id);
+        deleteProduct(id);
+      });
+    });
+  }
+
   function startEdit(p) {
     fieldId.value = p.id;
     fieldName.value = p.name;
+    document.getElementById('field-category-new-wrap').hidden = true;
     fieldCategory.value = p.category;
     fieldCondition.value = p.condition;
     fieldSpecs.value = p.specs || '';
@@ -484,6 +615,9 @@
     fieldImageFile.value = '';
     fieldImageRemove.checked = false;
     imagePreview.hidden = true;
+    document.getElementById('field-category-new-wrap').hidden = true;
+    document.getElementById('field-category-new').value = '';
+    if (selectedCategory) fieldCategory.value = selectedCategory;
     formHeading.textContent = 'Add a product';
     formSubmitBtn.textContent = 'Add product';
     formCancelBtn.hidden = true;
@@ -496,9 +630,18 @@
     formToast.textContent = '';
     formToast.className = 'admin-toast';
 
+    const categoryValue = fieldCategory.value === '__new__'
+      ? document.getElementById('field-category-new').value.trim()
+      : fieldCategory.value;
+    if (!categoryValue) {
+      formToast.textContent = 'Enter a category name.';
+      formToast.classList.add('err');
+      return;
+    }
+
     const fd = new FormData();
     fd.append('name', fieldName.value.trim());
-    fd.append('category', fieldCategory.value);
+    fd.append('category', categoryValue);
     fd.append('condition', fieldCondition.value);
     fd.append('specs', fieldSpecs.value.trim());
     fd.append('price_cents', String(Math.round(parseFloat(fieldPrice.value) * 100)));
@@ -518,8 +661,13 @@
       if (!res.ok) throw new Error((data && data.error) || `Request failed (${res.status})`);
       formToast.textContent = fieldId.value ? 'Product updated.' : 'Product added.';
       formToast.classList.add('ok');
+      selectedCategory = categoryValue;
       resetForm();
-      loadProducts();
+      await loadProducts();
+      await loadInventory();
+      document.getElementById('inventory-detail').hidden = false;
+      document.getElementById('inventory-detail-heading').textContent = `${CATEGORY_LABELS[categoryValue] || categoryValue} — products`;
+      renderProductRows();
     } catch (err) {
       formToast.textContent = err.message;
       formToast.classList.add('err');
@@ -534,7 +682,9 @@
     if (!confirm('Delete this product? This cannot be undone.')) return;
     try {
       await fetch(`/api/admin/products/${id}`, { method: 'DELETE' });
-      loadProducts();
+      await loadProducts();
+      await loadInventory();
+      renderProductRows();
     } catch (err) {
       alert(err.message);
     }

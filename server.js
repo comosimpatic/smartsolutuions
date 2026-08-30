@@ -592,6 +592,66 @@ app.get('/api/admin/overview', requireOwner, requireDb, async (req, res) => {
   });
 });
 
+app.get('/api/admin/inventory', requireAdmin, requireDb, async (req, res) => {
+  const [categoryRes, salesRes, serviceCountRes, serviceSalesRes] = await Promise.all([
+    pool.query(`
+      SELECT category, COUNT(*)::int AS product_count, COALESCE(SUM(stock),0)::int AS total_stock
+      FROM products GROUP BY category ORDER BY category
+    `),
+    pool.query(`
+      WITH days AS (
+        SELECT generate_series(current_date - interval '6 days', current_date, interval '1 day')::date AS day
+      ),
+      cat_sales AS (
+        SELECT p.category, date_trunc('day', o.created_at)::date AS day, SUM(oi.quantity)::int AS qty
+        FROM order_items oi
+        JOIN orders o ON o.id = oi.order_id
+        JOIN products p ON p.id = oi.product_id
+        WHERE o.created_at >= current_date - interval '6 days'
+        GROUP BY p.category, day
+      )
+      SELECT c.category, d.day, COALESCE(cs.qty,0)::int AS qty
+      FROM (SELECT DISTINCT category FROM products) c
+      CROSS JOIN days d
+      LEFT JOIN cat_sales cs ON cs.category = c.category AND cs.day = d.day
+      ORDER BY c.category, d.day
+    `),
+    pool.query(`SELECT COUNT(*)::int AS count FROM services WHERE active = true`),
+    pool.query(`
+      WITH days AS (
+        SELECT generate_series(current_date - interval '6 days', current_date, interval '1 day')::date AS day
+      ),
+      svc_sales AS (
+        SELECT date_trunc('day', o.created_at)::date AS day, SUM(oi.quantity)::int AS qty
+        FROM order_items oi JOIN orders o ON o.id = oi.order_id
+        WHERE oi.service_id IS NOT NULL AND o.created_at >= current_date - interval '6 days'
+        GROUP BY day
+      )
+      SELECT d.day, COALESCE(s.qty,0)::int AS qty FROM days d LEFT JOIN svc_sales s ON s.day = d.day ORDER BY d.day
+    `),
+  ]);
+
+  const salesByCategory = {};
+  for (const row of salesRes.rows) {
+    (salesByCategory[row.category] ||= []).push(row.qty);
+  }
+
+  const categories = categoryRes.rows.map((c) => ({
+    category: c.category,
+    productCount: c.product_count,
+    totalStock: c.total_stock,
+    sales7d: salesByCategory[c.category] || [],
+  }));
+
+  res.json({
+    categories,
+    services: {
+      count: serviceCountRes.rows[0].count,
+      sales7d: serviceSalesRes.rows.map((r) => r.qty),
+    },
+  });
+});
+
 app.get('/api/admin/products', requireAdmin, requireDb, async (req, res) => {
   const { rows } = await pool.query(`SELECT ${PRODUCT_COLUMNS} FROM products ORDER BY category, id`);
   res.json(rows.map(withImageSrc));
