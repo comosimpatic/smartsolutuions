@@ -67,6 +67,7 @@
     products: { btn: 'tab-products', panel: 'products-panel' },
     services: { btn: 'tab-services', panel: 'services-panel' },
     inquiries: { btn: 'tab-inquiries', panel: 'inquiries-panel' },
+    settings: { btn: 'tab-settings', panel: 'settings-panel' },
   };
 
   function activateTab(name) {
@@ -86,6 +87,7 @@
   document.getElementById('tab-products').addEventListener('click', () => activateTab('products'));
   document.getElementById('tab-services').addEventListener('click', () => activateTab('services'));
   document.getElementById('tab-inquiries').addEventListener('click', () => activateTab('inquiries'));
+  document.getElementById('tab-settings').addEventListener('click', () => activateTab('settings'));
 
   function showDashboard(role) {
     loginView.hidden = true;
@@ -811,6 +813,30 @@
       btn.disabled = false;
     }
   });
+
+  /* ============ Settings — change password (owner only) ============ */
+  function wirePasswordForm(formId, currentId, newId, toastId, role) {
+    document.getElementById(formId).addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const toast = document.getElementById(toastId);
+      toast.textContent = '';
+      toast.className = 'admin-toast';
+      const current_password = document.getElementById(currentId).value;
+      const new_password = document.getElementById(newId).value;
+      try {
+        await api('/api/admin/password', { method: 'PUT', body: JSON.stringify({ role, current_password, new_password }) });
+        toast.textContent = 'Password updated.';
+        toast.classList.add('ok');
+        document.getElementById(formId).reset();
+      } catch (err) {
+        toast.textContent = err.message;
+        toast.classList.add('err');
+      }
+    });
+  }
+
+  wirePasswordForm('staff-password-form', 'staff-pw-current', 'staff-pw-new', 'staff-pw-toast', 'staff');
+  wirePasswordForm('owner-password-form', 'owner-pw-current', 'owner-pw-new', 'owner-pw-toast', 'owner');
 
   checkSession();
 })();

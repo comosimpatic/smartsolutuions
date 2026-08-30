@@ -202,6 +202,17 @@ async function initDb() {
   `);
   await pool.query(`INSERT INTO promo_banner (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admin_credentials (
+      id INTEGER PRIMARY KEY DEFAULT 1,
+      staff_password_hash TEXT,
+      owner_password_hash TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      CONSTRAINT admin_credentials_single_row CHECK (id = 1)
+    );
+  `);
+  await pool.query(`INSERT INTO admin_credentials (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
+
   const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM products');
   if (rows[0].count === 0) {
     for (const [category, name, specs, price_cents, condition, icon] of SEED_PRODUCTS) {
@@ -468,12 +479,35 @@ function matchesPassword(candidate, expected) {
   return candBuf.length === expBuf.length && crypto.timingSafeEqual(candBuf, expBuf);
 }
 
-app.post('/api/admin/login', (req, res) => {
-  if (!STAFF_PASSWORD) {
-    return res.status(503).json({ error: 'Staff password is not configured yet.' });
+function hashPassword(plain) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(plain, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyHashedPassword(candidate, stored) {
+  if (!stored) return false;
+  const [salt, hash] = stored.split(':');
+  if (!salt || !hash) return false;
+  const candBuf = crypto.scryptSync(String(candidate || ''), salt, 64);
+  const hashBuf = Buffer.from(hash, 'hex');
+  return candBuf.length === hashBuf.length && crypto.timingSafeEqual(candBuf, hashBuf);
+}
+
+// A password changed in the admin UI is stored (hashed) in the DB and takes priority;
+// falls back to the STAFF_PASSWORD/OWNER_PASSWORD env vars until it's changed once.
+async function checkPassword(role, candidate) {
+  if (pool) {
+    const { rows } = await pool.query('SELECT staff_password_hash, owner_password_hash FROM admin_credentials WHERE id = 1');
+    const stored = role === 'owner' ? rows[0]?.owner_password_hash : rows[0]?.staff_password_hash;
+    if (stored) return verifyHashedPassword(candidate, stored);
   }
+  return matchesPassword(candidate, role === 'owner' ? OWNER_PASSWORD : STAFF_PASSWORD);
+}
+
+app.post('/api/admin/login', async (req, res) => {
   const { password } = req.body || {};
-  if (!matchesPassword(password, STAFF_PASSWORD)) {
+  if (!(await checkPassword('staff', password))) {
     return res.status(401).json({ error: 'Incorrect password' });
   }
 
@@ -484,12 +518,9 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // Second-layer login: escalates an already-logged-in session to owner.
-app.post('/api/admin/elevate', requireAdmin, (req, res) => {
-  if (!OWNER_PASSWORD) {
-    return res.status(503).json({ error: 'Owner password is not configured yet.' });
-  }
+app.post('/api/admin/elevate', requireAdmin, async (req, res) => {
   const { password } = req.body || {};
-  if (!matchesPassword(password, OWNER_PASSWORD)) {
+  if (!(await checkPassword('owner', password))) {
     return res.status(401).json({ error: 'Incorrect password' });
   }
 
@@ -497,6 +528,28 @@ app.post('/api/admin/elevate', requireAdmin, (req, res) => {
   const token = signSession(expiresAt, 'owner');
   res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${Math.floor(SESSION_MAX_AGE_MS / 1000)}; SameSite=Strict`);
   res.json({ ok: true, role: 'owner' });
+});
+
+// Owner-only: change the staff or owner login password (hashed, stored in the DB, overrides the env var).
+app.put('/api/admin/password', requireOwner, requireDb, async (req, res) => {
+  const { role, current_password, new_password } = req.body || {};
+  if (role !== 'staff' && role !== 'owner') {
+    return res.status(400).json({ error: 'role must be "staff" or "owner"' });
+  }
+  if (!new_password || String(new_password).length < 6) {
+    return res.status(400).json({ error: 'New password must be at least 6 characters' });
+  }
+  if (!(await checkPassword('owner', current_password))) {
+    return res.status(401).json({ error: 'Current owner password is incorrect' });
+  }
+
+  const column = role === 'owner' ? 'owner_password_hash' : 'staff_password_hash';
+  await pool.query(
+    `INSERT INTO admin_credentials (id, ${column}) VALUES (1, $1)
+     ON CONFLICT (id) DO UPDATE SET ${column} = $1, updated_at = now()`,
+    [hashPassword(new_password)]
+  );
+  res.json({ ok: true });
 });
 
 app.post('/api/admin/logout', (req, res) => {

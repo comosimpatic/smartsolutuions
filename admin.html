@@ -71,6 +71,7 @@
         <button type="button" class="admin-tab" id="tab-products">Products</button>
         <button type="button" class="admin-tab" id="tab-services">Services</button>
         <button type="button" class="admin-tab" id="tab-inquiries">Inquiries</button>
+        <button type="button" class="admin-tab" id="tab-settings" data-owner-only>Settings</button>
       </div>
 
       <!-- ============ Record a sale (staff only) ============ -->
@@ -390,6 +391,47 @@
             </thead>
             <tbody id="inquiry-rows"></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ============ Settings (owner only) ============ -->
+      <div id="settings-panel" hidden>
+        <div class="admin-section-head"><h2>Change staff password</h2></div>
+        <div class="admin-form-card" style="margin-bottom: 40px; max-width: 420px;">
+          <p style="font-size:0.85rem; color:var(--text-faint); margin-bottom:16px;">This is the shared sign-in staff use to record sales.</p>
+          <form id="staff-password-form">
+            <div class="admin-field">
+              <label for="staff-pw-current">Your owner password</label>
+              <input type="password" id="staff-pw-current" autocomplete="off" required>
+            </div>
+            <div class="admin-field">
+              <label for="staff-pw-new">New staff password</label>
+              <input type="password" id="staff-pw-new" autocomplete="new-password" minlength="6" required>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <button type="submit" class="btn btn-primary">Save staff password</button>
+              <p class="admin-toast" id="staff-pw-toast"></p>
+            </div>
+          </form>
+        </div>
+
+        <div class="admin-section-head"><h2>Change owner password</h2></div>
+        <div class="admin-form-card" style="max-width: 420px;">
+          <p style="font-size:0.85rem; color:var(--text-faint); margin-bottom:16px;">Unlocks the live dashboard, products and this settings page.</p>
+          <form id="owner-password-form">
+            <div class="admin-field">
+              <label for="owner-pw-current">Current owner password</label>
+              <input type="password" id="owner-pw-current" autocomplete="off" required>
+            </div>
+            <div class="admin-field">
+              <label for="owner-pw-new">New owner password</label>
+              <input type="password" id="owner-pw-new" autocomplete="new-password" minlength="6" required>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <button type="submit" class="btn btn-primary">Save owner password</button>
+              <p class="admin-toast" id="owner-pw-toast"></p>
+            </div>
+          </form>
         </div>
       </div>
     </main>
