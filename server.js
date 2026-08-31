@@ -10,6 +10,15 @@ const zoho = require('./zoho');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Express 4 doesn't auto-catch rejected promises from async route handlers,
+// and Node terminates the whole process on an unhandled rejection by
+// default — one bad DB call anywhere would take the entire site down.
+// Log instead of crashing; individual routes below still handle their own
+// errors properly, this is a last-resort net for the ones that don't.
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled promise rejection:', err);
+});
+
 const STAFF_PASSWORD = process.env.STAFF_PASSWORD || null; // first-layer login — record sales only
 const OWNER_PASSWORD = process.env.OWNER_PASSWORD || null; // second-layer login — unlocks Overview + Products
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -934,35 +943,40 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
     cleanItems.push({ productId, serviceId, name, price_cents, quantity });
   }
 
-  const syntheticSessionId = `instore-${crypto.randomUUID()}`;
-  const orderRes = await pool.query(
-    `INSERT INTO orders (stripe_session_id, customer_email, customer_name, customer_phone, status, fulfillment_status, total_cents, channel, payment_method)
-     VALUES ($1,$2,$3,$4,'paid','fulfilled',$5,'in_store',$6) RETURNING *`,
-    [syntheticSessionId, customer_email || null, customer_name || null, customer_phone || null, total, payment_method || 'cash']
-  );
-  const order = orderRes.rows[0];
-
-  const itemRows = [];
-  for (const it of cleanItems) {
-    await pool.query(
-      'INSERT INTO order_items (order_id, product_id, service_id, name, price_cents, quantity) VALUES ($1,$2,$3,$4,$5,$6)',
-      [order.id, it.productId, it.serviceId, it.name, it.price_cents, it.quantity]
+  try {
+    const syntheticSessionId = `instore-${crypto.randomUUID()}`;
+    const orderRes = await pool.query(
+      `INSERT INTO orders (stripe_session_id, customer_email, customer_name, customer_phone, status, fulfillment_status, total_cents, channel, payment_method)
+       VALUES ($1,$2,$3,$4,'paid','fulfilled',$5,'in_store',$6) RETURNING *`,
+      [syntheticSessionId, customer_email || null, customer_name || null, customer_phone || null, total, payment_method || 'cash']
     );
-    itemRows.push({ name: it.name, price_cents: it.price_cents, quantity: it.quantity, is_service: !!it.serviceId });
-    if (it.productId) {
-      const { rows: stockRows } = await pool.query(
-        'UPDATE products SET stock = GREATEST(stock - $1, 0) WHERE id = $2 RETURNING name, stock',
-        [it.quantity, it.productId]
+    const order = orderRes.rows[0];
+
+    const itemRows = [];
+    for (const it of cleanItems) {
+      await pool.query(
+        'INSERT INTO order_items (order_id, product_id, service_id, name, price_cents, quantity) VALUES ($1,$2,$3,$4,$5,$6)',
+        [order.id, it.productId, it.serviceId, it.name, it.price_cents, it.quantity]
       );
-      if (stockRows[0] && stockRows[0].stock <= LOW_STOCK_THRESHOLD) {
-        broadcastEvent('low_stock', { name: stockRows[0].name, stock: stockRows[0].stock });
+      itemRows.push({ name: it.name, price_cents: it.price_cents, quantity: it.quantity, is_service: !!it.serviceId });
+      if (it.productId) {
+        const { rows: stockRows } = await pool.query(
+          'UPDATE products SET stock = GREATEST(stock - $1, 0) WHERE id = $2 RETURNING name, stock',
+          [it.quantity, it.productId]
+        );
+        if (stockRows[0] && stockRows[0].stock <= LOW_STOCK_THRESHOLD) {
+          broadcastEvent('low_stock', { name: stockRows[0].name, stock: stockRows[0].stock });
+        }
       }
     }
-  }
 
-  broadcastEvent('sale', { channel: 'in_store', total_cents: order.total_cents, items: itemRows });
-  zoho.syncOrderToZoho(pool, order.id).catch((err) => console.error('Zoho sync (unexpected):', err.message)); // fire-and-forget — never blocks the sale response/receipt
-  res.status(201).json({ order, items: itemRows });
+    broadcastEvent('sale', { channel: 'in_store', total_cents: order.total_cents, items: itemRows });
+    zoho.syncOrderToZoho(pool, order.id).catch((err) => console.error('Zoho sync (unexpected):', err.message)); // fire-and-forget — never blocks the sale response/receipt
+    res.status(201).json({ order, items: itemRows });
+  } catch (err) {
+    console.error('Failed to record in-store sale:', err.message);
+    res.status(500).json({ error: `Could not record the sale: ${err.message}` });
+  }
 });
 
 /* ---------- Admin API — owner + staff: customer inquiries ---------- */
