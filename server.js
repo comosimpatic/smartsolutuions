@@ -5,6 +5,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const sanitizeHtml = require('sanitize-html');
 const { Pool } = require('pg');
+const zoho = require('./zoho');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -171,6 +172,9 @@ async function initDb() {
   await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS channel TEXT NOT NULL DEFAULT 'online'`);
   await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT`);
   await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_phone TEXT`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS zoho_invoice_id TEXT`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS zoho_sync_status TEXT NOT NULL DEFAULT 'pending'`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS zoho_sync_error TEXT`);
   await pool.query(`UPDATE orders SET payment_method = 'stripe' WHERE payment_method IS NULL`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS order_items (
@@ -479,6 +483,7 @@ app.get('/api/checkout/confirm', requireDb, requireStripe, async (req, res) => {
   }
 
   broadcastEvent('sale', { channel: 'online', total_cents: order.total_cents, items: itemRows });
+  zoho.syncOrderToZoho(pool, order.id); // fire-and-forget — never blocks the checkout response
   res.json({ order, items: itemRows });
 });
 
@@ -891,6 +896,15 @@ app.put('/api/admin/orders/:id/fulfillment', requireOwner, requireDb, async (req
   res.json(rows[0]);
 });
 
+app.post('/api/admin/orders/:id/zoho-retry', requireOwner, requireDb, async (req, res) => {
+  const { id } = req.params;
+  const { rows } = await pool.query('SELECT id FROM orders WHERE id = $1', [id]);
+  if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+  await zoho.syncOrderToZoho(pool, Number(id));
+  const { rows: updated } = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
+  res.json(updated[0]);
+});
+
 /* ---------- Admin API — any logged-in staff: record in-store sales ---------- */
 app.get('/api/admin/orders/:id', requireAdmin, requireDb, async (req, res) => {
   const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
@@ -947,6 +961,7 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
   }
 
   broadcastEvent('sale', { channel: 'in_store', total_cents: order.total_cents, items: itemRows });
+  zoho.syncOrderToZoho(pool, order.id); // fire-and-forget — never blocks the sale response/receipt
   res.status(201).json({ order, items: itemRows });
 });
 

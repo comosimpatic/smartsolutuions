@@ -377,11 +377,13 @@
       allOrders = await api('/api/admin/orders');
       renderOrderRows();
     } catch (err) {
-      orderRows.innerHTML = `<tr><td colspan="7" class="admin-error">${err.message}</td></tr>`;
+      orderRows.innerHTML = `<tr><td colspan="8" class="admin-error">${err.message}</td></tr>`;
     }
   }
 
   document.getElementById('order-search').addEventListener('input', renderOrderRows);
+
+  const ZOHO_STATUS_LABELS = { synced: 'Synced', pending: 'Pending', failed: 'Failed', unconfigured: 'Not connected' };
 
   function renderOrderRows() {
     const q = document.getElementById('order-search').value.trim().toLowerCase();
@@ -396,14 +398,16 @@
         <td>${o.items.map((i) => `${i.quantity}× ${escapeHtml(i.name)}`).join('<br>')}</td>
         <td>${money(o.total_cents)}</td>
         <td><span class="order-status order-status-${o.fulfillment_status}">${o.fulfillment_status}</span></td>
+        <td><span class="order-status ${o.zoho_sync_status === 'synced' ? 'order-status-fulfilled' : ''}" title="${escapeHtml(o.zoho_sync_error || '')}">${ZOHO_STATUS_LABELS[o.zoho_sync_status] || o.zoho_sync_status}</span></td>
         <td>
           <div class="admin-row-actions">
             <button type="button" data-action="receipt">Receipt</button>
             <button type="button" data-action="toggle-fulfillment">${o.fulfillment_status === 'fulfilled' ? 'Mark unfulfilled' : 'Mark fulfilled'}</button>
+            ${o.zoho_sync_status === 'failed' ? '<button type="button" data-action="retry-zoho">Retry Zoho sync</button>' : ''}
           </div>
         </td>
       </tr>
-    `).join('') || '<tr><td colspan="7">No orders yet.</td></tr>';
+    `).join('') || '<tr><td colspan="8">No orders yet.</td></tr>';
 
     orderRows.querySelectorAll('[data-action="receipt"]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -420,6 +424,21 @@
           loadOrders();
         } catch (err) {
           alert(err.message);
+        }
+      });
+    });
+    orderRows.querySelectorAll('[data-action="retry-zoho"]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = Number(btn.closest('tr').dataset.id);
+        btn.disabled = true;
+        btn.textContent = 'Retrying…';
+        try {
+          await api(`/api/admin/orders/${id}/zoho-retry`, { method: 'POST' });
+          loadOrders();
+        } catch (err) {
+          alert(err.message);
+          btn.disabled = false;
+          btn.textContent = 'Retry Zoho sync';
         }
       });
     });
