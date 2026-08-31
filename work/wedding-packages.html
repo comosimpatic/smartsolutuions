@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Package Builder — Smart Solutions</title>
+<meta name="description" content="A package-and-vendor booking platform for weddings — clients build their day with a live running total, vendors get a free profile in exchange for a guaranteed booking.">
+<link rel="icon" type="image/png" href="../assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/work-page.css">
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="grid-overlay"></div>
+
+<header class="site-header" id="site-header">
+  <div class="container header-inner">
+    <a href="../index.html#top" class="logo">
+      <img class="logo-mark" src="../assets/logo-mark.png" alt="Smart Solutions">
+      <span>Smart <em>Solutions</em></span>
+    </a>
+    <nav class="main-nav" id="main-nav">
+      <a href="../index.html#services">Services</a>
+      <a href="../index.html#process">Process</a>
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#contact" class="nav-cta">Start a Project</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="wp-hero">
+    <video class="wp-hero-video" src="../media/work-wedding.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
+    <div class="wp-hero-scrim"></div>
+    <div class="container wp-hero-inner">
+      <a href="../index.html#work" class="wp-back">← Back to work</a>
+      <span class="wp-chip"><span class="work-chip-dot"></span>Wedding Packages</span>
+      <h1>Wedding Package Builder</h1>
+      <p class="wp-lead">A package-and-vendor booking platform — clients build their day with a live running total, vendors get a free profile in exchange for a guaranteed booking.</p>
+      <div class="wp-hero-actions">
+        <a href="https://wedding-package-site-production.up.railway.app" class="btn btn-primary" target="_blank" rel="noopener">View the live site <span aria-hidden="true">→</span></a>
+        <a href="../index.html#contact" class="btn btn-ghost">Start a Project</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="wp-body">
+    <div class="container wp-body-grid">
+      <div>
+        <h2>What's included</h2>
+        <ul class="wp-features">
+          <li>A package builder with vendor add-ons — Beauty, Entertainment, Catering, Photography and more — and a live-updating running total</li>
+          <li>Free vendor mini-profile pages, offered in exchange for a client discount instead of a listing fee</li>
+          <li>Booking inquiries with a guaranteed-availability contract once a vendor is booked</li>
+          <li>A full admin dashboard to manage packages, categories, vendors and bookings</li>
+        </ul>
+
+      </div>
+      <aside class="wp-aside">
+        <h3>How we get there</h3>
+        <ol class="wp-steps">
+          <li>Package &amp; vendor structure</li>
+          <li>Booking flow &amp; admin build</li>
+          <li>Vendor onboarding &amp; launch</li>
+        </ol>
+      </aside>
+    </div>
+  </section>
+
+  <section class="wp-cta">
+    <div class="container">
+      <h2>Planning something similar?</h2>
+      <p>Tell us where things stand today and we'll map out what a production-ready version of this looks like for your business.</p>
+      <a href="../index.html#contact" class="btn btn-primary">Start a Project <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <a href="../index.html#top" class="logo">
+      <img class="logo-mark" src="../assets/logo-mark.png" alt="Smart Solutions">
+      <span>Smart <em>Solutions</em></span>
+    </a>
+    <div class="footer-links">
+      <a href="mailto:smartsolutionssvg@gmail.com">smartsolutionssvg@gmail.com</a>
+      <a href="../index.html#services">Services</a>
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#faq">FAQ</a>
+      <a href="../index.html#contact">Contact</a>
+    </div>
+    <p class="footer-copy">© <span id="year"></span> Smart Solutions. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="../js/main.js"></script>
+</body>
+</html>
