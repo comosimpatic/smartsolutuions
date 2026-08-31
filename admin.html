@@ -65,15 +65,6 @@
     <main class="admin-main">
       <h1 id="dashboard-title">Tech Store</h1>
 
-      <div class="admin-tabs" id="admin-tabs">
-        <button type="button" class="admin-tab" id="tab-sale" data-staff-only>Record a sale</button>
-        <button type="button" class="admin-tab" id="tab-overview" data-owner-only>SSDC</button>
-        <button type="button" class="admin-tab" id="tab-services">Services</button>
-        <button type="button" class="admin-tab" id="tab-inquiries">Inquiries</button>
-        <button type="button" class="admin-tab" id="tab-settings" data-owner-only>Settings</button>
-        <button type="button" class="admin-tab" id="tab-products">Inventory</button>
-      </div>
-
       <!-- ============ Record a sale (staff only) ============ -->
       <div id="sale-panel">
         <div class="admin-section-head"><h2>Record an in-store sale</h2></div>
@@ -126,6 +117,7 @@
       <div id="overview-panel" hidden>
         <div class="admin-section-head"><h2>Smart Solutions Data Centre <span style="color:var(--text-faint); font-weight:600;">(SSDC)</span></h2></div>
         <div class="banner-cards" id="stats-row"></div>
+        <div class="admin-form-card ssdc-detail-card" id="ssdc-detail" hidden></div>
 
         <div class="live-dash-grid">
           <div>
@@ -181,47 +173,6 @@
 
       <!-- ============ Inventory (owner + staff) ============ -->
       <div id="products-panel" hidden>
-        <div class="admin-section-head">
-          <h2>Storefront promo banner</h2>
-        </div>
-        <div class="admin-form-card" style="margin-bottom: 40px;">
-          <form id="promo-form">
-            <div class="admin-form-grid">
-              <div class="admin-field span-2">
-                <label for="promo-headline">Headline</label>
-                <input type="text" id="promo-headline" placeholder="e.g. Trade in and save.">
-              </div>
-              <div class="admin-field span-2">
-                <label for="promo-subtext">Subtext</label>
-                <input type="text" id="promo-subtext" placeholder="A short line about the deal">
-              </div>
-              <div class="admin-field">
-                <label for="promo-cta-text">Button text</label>
-                <input type="text" id="promo-cta-text" placeholder="Shop now">
-              </div>
-              <div class="admin-field">
-                <label for="promo-cta-link">Button link</label>
-                <input type="text" id="promo-cta-link" placeholder="#tp-section-phones">
-              </div>
-              <div class="admin-field span-2">
-                <label for="promo-image-file">Banner image (optional, PNG with transparency works best)</label>
-                <input type="file" id="promo-image-file" accept="image/*">
-                <div class="admin-image-preview" id="promo-image-preview" hidden>
-                  <img id="promo-image-preview-img" alt="Current banner image">
-                  <label><input type="checkbox" id="promo-image-remove"> Remove current image</label>
-                </div>
-              </div>
-              <div class="admin-field span-2">
-                <label><input type="checkbox" id="promo-enabled"> Show this banner on the storefront</label>
-              </div>
-            </div>
-            <div style="display:flex; gap:12px; align-items:center;">
-              <button type="submit" class="btn btn-primary">Save banner</button>
-              <p class="admin-toast" id="promo-toast"></p>
-            </div>
-          </form>
-        </div>
-
         <div class="admin-section-head">
           <h2>Inventory</h2>
         </div>
@@ -399,7 +350,6 @@
                 <th>Item</th>
                 <th>Message</th>
                 <th>Status</th>
-                <th></th>
               </tr>
             </thead>
             <tbody id="inquiry-rows"></tbody>
@@ -414,7 +364,7 @@
           <p style="font-size:0.85rem; color:var(--text-faint); margin-bottom:16px;">This is the shared sign-in staff use to record sales.</p>
           <form id="staff-password-form">
             <div class="admin-field">
-              <label for="staff-pw-current">Your owner password</label>
+              <label for="staff-pw-current">Current password</label>
               <input type="password" id="staff-pw-current" autocomplete="off" required>
             </div>
             <div class="admin-field">
@@ -433,11 +383,11 @@
           <p style="font-size:0.85rem; color:var(--text-faint); margin-bottom:16px;">Unlocks the live dashboard, products and this settings page.</p>
           <form id="owner-password-form">
             <div class="admin-field">
-              <label for="owner-pw-current">Current owner password</label>
+              <label for="owner-pw-current">Owner current password</label>
               <input type="password" id="owner-pw-current" autocomplete="off" required>
             </div>
             <div class="admin-field">
-              <label for="owner-pw-new">New owner password</label>
+              <label for="owner-pw-new">New password</label>
               <input type="password" id="owner-pw-new" autocomplete="new-password" minlength="6" required>
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
@@ -446,6 +396,70 @@
             </div>
           </form>
         </div>
+      </div>
+
+      <!-- ============ Promo banner (owner + staff) ============ -->
+      <div id="promo-panel" hidden>
+        <div class="admin-section-head">
+          <h2>Storefront promo banner</h2>
+        </div>
+        <div class="admin-form-card">
+          <form id="promo-form">
+            <div class="admin-form-grid">
+              <div class="admin-field span-2">
+                <label for="promo-headline">Headline</label>
+                <div class="richtext-toolbar" data-target="promo-headline">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <button type="button" data-cmd="link" title="Link">🔗</button>
+                </div>
+                <div class="richtext-editor" id="promo-headline" contenteditable="true" data-placeholder="e.g. Trade in and save."></div>
+              </div>
+              <div class="admin-field span-2">
+                <label for="promo-subtext">Subtext</label>
+                <div class="richtext-toolbar" data-target="promo-subtext">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <button type="button" data-cmd="link" title="Link">🔗</button>
+                </div>
+                <div class="richtext-editor" id="promo-subtext" contenteditable="true" data-placeholder="A short line about the deal"></div>
+              </div>
+              <div class="admin-field">
+                <label for="promo-cta-text">Button text</label>
+                <input type="text" id="promo-cta-text" placeholder="Shop now">
+              </div>
+              <div class="admin-field">
+                <label for="promo-cta-link">Button link</label>
+                <input type="text" id="promo-cta-link" placeholder="#tp-section-phones">
+              </div>
+              <div class="admin-field span-2">
+                <label for="promo-image-file">Banner image (optional, PNG with transparency works best)</label>
+                <input type="file" id="promo-image-file" accept="image/*">
+                <div class="admin-image-preview" id="promo-image-preview" hidden>
+                  <img id="promo-image-preview-img" alt="Current banner image">
+                  <label><input type="checkbox" id="promo-image-remove"> Remove current image</label>
+                </div>
+              </div>
+              <div class="admin-field span-2">
+                <label><input type="checkbox" id="promo-enabled"> Show this banner on the storefront</label>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <button type="submit" class="btn btn-primary">Save banner</button>
+              <p class="admin-toast" id="promo-toast"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="admin-tabs" id="admin-tabs">
+        <button type="button" class="admin-tab" id="tab-sale" data-staff-only>Record a sale</button>
+        <button type="button" class="admin-tab" id="tab-overview" data-owner-only>SSDC</button>
+        <button type="button" class="admin-tab" id="tab-services">Services</button>
+        <button type="button" class="admin-tab" id="tab-inquiries">Inquiries</button>
+        <button type="button" class="admin-tab" id="tab-settings" data-owner-only>Settings</button>
+        <button type="button" class="admin-tab" id="tab-products">Inventory</button>
+        <button type="button" class="admin-tab" id="tab-promo">Promo banner</button>
       </div>
     </main>
   </div>

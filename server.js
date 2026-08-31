@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 const sharp = require('sharp');
+const sanitizeHtml = require('sanitize-html');
 const { Pool } = require('pg');
 
 const app = express();
@@ -60,6 +61,16 @@ async function normalizeProductPhoto(buffer) {
     .resize(PRODUCT_PHOTO_SIZE, PRODUCT_PHOTO_SIZE, { fit: 'cover', position: 'attention' })
     .jpeg({ quality: 85 })
     .toBuffer();
+}
+
+const RICH_TEXT_OPTIONS = {
+  allowedTags: ['b', 'strong', 'i', 'em', 'a', 'br'],
+  allowedAttributes: { a: ['href'] },
+  allowedSchemes: ['http', 'https', 'mailto'],
+};
+
+function sanitizeRichText(html) {
+  return sanitizeHtml(String(html || ''), RICH_TEXT_OPTIONS).trim();
 }
 
 async function normalizePromoImage(buffer) {
@@ -592,6 +603,60 @@ app.get('/api/admin/overview', requireOwner, requireDb, async (req, res) => {
   });
 });
 
+app.get('/api/admin/revenue-today', requireOwner, requireDb, async (req, res) => {
+  const [breakdownRes, channelRes] = await Promise.all([
+    pool.query(`
+      SELECT
+        COALESCE(SUM(CASE WHEN oi.product_id IS NOT NULL THEN oi.price_cents*oi.quantity ELSE 0 END),0)::int AS product_revenue_cents,
+        COUNT(DISTINCT CASE WHEN oi.product_id IS NOT NULL THEN oi.id END)::int AS product_line_count,
+        COALESCE(SUM(CASE WHEN oi.service_id IS NOT NULL THEN oi.price_cents*oi.quantity ELSE 0 END),0)::int AS service_revenue_cents,
+        COUNT(DISTINCT CASE WHEN oi.service_id IS NOT NULL THEN oi.id END)::int AS service_line_count,
+        COALESCE(SUM(CASE WHEN oi.product_id IS NULL AND oi.service_id IS NULL THEN oi.price_cents*oi.quantity ELSE 0 END),0)::int AS other_revenue_cents
+      FROM order_items oi JOIN orders o ON o.id = oi.order_id
+      WHERE o.created_at >= date_trunc('day', now())
+    `),
+    pool.query(`
+      SELECT channel, COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS orders
+      FROM orders WHERE created_at >= date_trunc('day', now()) GROUP BY channel
+    `),
+  ]);
+  const b = breakdownRes.rows[0];
+  res.json({
+    productRevenueCents: b.product_revenue_cents,
+    productLineCount: b.product_line_count,
+    serviceRevenueCents: b.service_revenue_cents,
+    serviceLineCount: b.service_line_count,
+    otherRevenueCents: b.other_revenue_cents,
+    byChannel: channelRes.rows,
+  });
+});
+
+app.get('/api/admin/revenue-trend', requireOwner, requireDb, async (req, res) => {
+  const [totalsRes, weeklyRes] = await Promise.all([
+    pool.query(`
+      SELECT
+        (SELECT COALESCE(SUM(total_cents),0)::int FROM orders WHERE created_at >= now() - interval '7 days') AS week_cents,
+        (SELECT COALESCE(SUM(total_cents),0)::int FROM orders WHERE created_at >= now() - interval '30 days') AS month_cents,
+        (SELECT COALESCE(SUM(total_cents),0)::int FROM orders WHERE created_at >= now() - interval '90 days') AS quarter_cents
+    `),
+    pool.query(`
+      WITH weeks AS (
+        SELECT generate_series(date_trunc('week', now()) - interval '11 weeks', date_trunc('week', now()), interval '1 week') AS week_start
+      )
+      SELECT w.week_start, COALESCE(SUM(o.total_cents),0)::int AS revenue_cents
+      FROM weeks w
+      LEFT JOIN orders o ON date_trunc('week', o.created_at) = w.week_start
+      GROUP BY w.week_start ORDER BY w.week_start
+    `),
+  ]);
+  res.json({
+    weekCents: totalsRes.rows[0].week_cents,
+    monthCents: totalsRes.rows[0].month_cents,
+    quarterCents: totalsRes.rows[0].quarter_cents,
+    weeklySeries: weeklyRes.rows.map((r) => ({ weekStart: r.week_start, revenueCents: r.revenue_cents })),
+  });
+});
+
 app.get('/api/admin/inventory', requireAdmin, requireDb, async (req, res) => {
   const [categoryRes, salesRes, serviceCountRes, serviceSalesRes] = await Promise.all([
     pool.query(`
@@ -781,7 +846,7 @@ app.put('/api/admin/promo', requireAdmin, requireDb, upload.single('image'), asy
   const enabled = req.body?.enabled === 'true';
 
   const params = [
-    headline || '', subtext || '', cta_text || 'Shop now', cta_link || '#tp-search', enabled,
+    sanitizeRichText(headline), sanitizeRichText(subtext), cta_text || 'Shop now', cta_link || '#tp-search', enabled,
   ];
   let imageClause = '';
   if (req.file) {
@@ -891,9 +956,11 @@ app.get('/api/admin/inquiries', requireAdmin, requireDb, async (req, res) => {
   res.json(rows);
 });
 
+const INQUIRY_STATUSES = ['new', 'read', 'responded'];
+
 app.put('/api/admin/inquiries/:id/status', requireAdmin, requireDb, async (req, res) => {
   const { id } = req.params;
-  const status = req.body?.status === 'read' ? 'read' : 'new';
+  const status = INQUIRY_STATUSES.includes(req.body?.status) ? req.body.status : 'new';
   const { rows } = await pool.query('UPDATE inquiries SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found' });
   res.json(rows[0]);

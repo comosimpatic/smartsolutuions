@@ -49,14 +49,14 @@
     return `<svg class="banner-card-sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${coords}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
 
-  function renderBannerCard({ key, label, num, sub, sparkline, gradient, active, clickable = true }) {
+  function renderBannerCard({ key, label, num, numUnit, sub, sparkline, gradient, active, clickable = true }) {
     return `
       <button type="button" class="banner-card${active ? ' active' : ''}${clickable ? '' : ' static'}" style="--card-grad: var(--${gradient})" data-key="${escapeHtml(key)}"${clickable ? '' : ' disabled'}>
         <div class="banner-card-top">
           <span class="banner-card-label">${escapeHtml(label)}</span>
           ${sparkline ? renderSparkline(sparkline) : ''}
         </div>
-        <div class="banner-card-num">${num}</div>
+        <div class="banner-card-num">${num}${numUnit ? `<span class="banner-card-num-unit"> ${escapeHtml(numUnit)}</span>` : ''}</div>
         <div class="banner-card-sub">${escapeHtml(sub)}</div>
       </button>
     `;
@@ -95,6 +95,7 @@
     services: { btn: 'tab-services', panel: 'services-panel' },
     inquiries: { btn: 'tab-inquiries', panel: 'inquiries-panel' },
     settings: { btn: 'tab-settings', panel: 'settings-panel' },
+    promo: { btn: 'tab-promo', panel: 'promo-panel' },
   };
 
   function activateTab(name) {
@@ -102,16 +103,16 @@
       document.getElementById(btn).classList.toggle('active', key === name);
       document.getElementById(panel).hidden = key !== name;
     });
-    if (name === 'overview') { loadOverview(); loadOrders(); loadInsights(); }
+    if (name === 'overview') { ssdcOpenCard = null; document.getElementById('ssdc-detail').hidden = true; loadOverview(); loadOrders(); loadInsights(); }
     if (name === 'products') {
       selectedCategory = null;
       document.getElementById('inventory-detail').hidden = true;
       loadInventory();
       loadProducts();
-      loadPromo();
     }
+    if (name === 'promo') { loadPromo(); }
     if (name === 'services') { loadServices(); }
-    if (name === 'sale') { loadSaleProducts(); }
+    if (name === 'sale') { loadSaleProducts(); document.getElementById('sale-scan-input').focus(); }
     if (name === 'inquiries') { loadInquiries(); }
   }
 
@@ -121,15 +122,17 @@
   document.getElementById('tab-services').addEventListener('click', () => activateTab('services'));
   document.getElementById('tab-inquiries').addEventListener('click', () => activateTab('inquiries'));
   document.getElementById('tab-settings').addEventListener('click', () => activateTab('settings'));
+  document.getElementById('tab-promo').addEventListener('click', () => activateTab('promo'));
 
   function showDashboard(role) {
     loginView.hidden = true;
     dashboardView.hidden = false;
     roleBadge.textContent = role === 'owner' ? 'Owner' : 'Staff';
+    document.getElementById('dashboard-title').textContent = role === 'owner' ? 'Tech Store Overview' : 'Tech Store';
     ownerElevateLink.hidden = role === 'owner';
     document.querySelectorAll('[data-owner-only]').forEach((el) => { el.hidden = role !== 'owner'; });
     document.querySelectorAll('[data-staff-only]').forEach((el) => { el.hidden = role !== 'staff'; });
-    activateTab(role === 'owner' ? 'overview' : 'sale');
+    activateTab(role === 'owner' ? 'overview' : 'products');
     if (role === 'owner') connectLiveFeed();
   }
 
@@ -278,15 +281,20 @@
   });
 
   /* ============ Overview (owner) ============ */
+  let ssdcOpenCard = null;
+
   async function loadOverview() {
     try {
       const data = await api('/api/admin/overview');
       statsRow.innerHTML = [
-        renderBannerCard({ key: 'revenue-today', label: 'Revenue (today)', num: money(data.revenueTodayCents), sub: `${data.ordersToday} orders today`, gradient: 'grad-blue', clickable: false }),
-        renderBannerCard({ key: 'revenue-30d', label: 'Revenue (30 days)', num: money(data.revenue30dCents), sub: `${data.orders30d} orders`, gradient: 'grad-teal', clickable: false }),
-        renderBannerCard({ key: 'total-products', label: 'Total products', num: data.totalProducts, sub: `${data.byCategory.length} categories`, gradient: 'grad-orange', clickable: false }),
-        renderBannerCard({ key: 'low-stock', label: 'Low stock items', num: data.lowStock.length, sub: 'at or below threshold', gradient: 'grad-pink', clickable: false }),
+        renderBannerCard({ key: 'revenue-today', label: 'Revenue (today) — click for a breakdown', num: money(data.revenueTodayCents), sub: `${data.ordersToday} orders today`, gradient: 'grad-blue', active: ssdcOpenCard === 'revenue-today' }),
+        renderBannerCard({ key: 'revenue-30d', label: 'Revenue trend — click for weekly/monthly/quarterly', num: money(data.revenue30dCents), sub: `${data.orders30d} orders in 30 days`, gradient: 'grad-teal', active: ssdcOpenCard === 'revenue-30d' }),
+        renderBannerCard({ key: 'total-products', label: 'Total products', num: data.totalProducts, numUnit: 'products', sub: `across ${data.byCategory.length} categories`, gradient: 'grad-orange', clickable: false }),
+        renderBannerCard({ key: 'low-stock', label: 'Low stock items', num: data.lowStock.length, numUnit: 'items', sub: 'at or below threshold', gradient: 'grad-pink', clickable: false }),
       ].join('');
+      statsRow.querySelectorAll('.banner-card:not(.static)').forEach((btn) => {
+        btn.addEventListener('click', () => toggleSsdcDetail(btn.dataset.key));
+      });
       const lowStockRows = document.getElementById('low-stock-rows');
       lowStockRows.innerHTML = data.lowStock.map((p) => `
         <tr><td>${escapeHtml(p.name)}</td><td>${p.stock}</td></tr>
@@ -294,6 +302,72 @@
     } catch (err) {
       statsRow.innerHTML = `<p class="admin-error">${err.message}</p>`;
     }
+  }
+
+  async function toggleSsdcDetail(key) {
+    const detail = document.getElementById('ssdc-detail');
+    if (ssdcOpenCard === key) {
+      ssdcOpenCard = null;
+      detail.hidden = true;
+      loadOverview();
+      return;
+    }
+    ssdcOpenCard = key;
+    detail.hidden = false;
+    detail.innerHTML = '<p style="color:var(--text-faint);">Loading…</p>';
+    try {
+      if (key === 'revenue-today') {
+        const data = await api('/api/admin/revenue-today');
+        renderRevenueToday(data);
+      } else if (key === 'revenue-30d') {
+        const data = await api('/api/admin/revenue-trend');
+        renderRevenueTrend(data);
+      }
+      loadOverview();
+    } catch (err) {
+      detail.innerHTML = `<p class="admin-error">${err.message}</p>`;
+    }
+  }
+
+  function renderRevenueToday(data) {
+    const detail = document.getElementById('ssdc-detail');
+    const channelRows = data.byChannel.map((c) => `
+      <div class="ssdc-detail-row">
+        <span class="label">${c.channel === 'in_store' ? 'In-store sales' : 'Online sales'}</span>
+        <span class="value">${money(c.revenue_cents)} · ${c.orders} orders</span>
+      </div>
+    `).join('') || '<p style="color:var(--text-faint);">No sales yet today.</p>';
+    detail.innerHTML = `
+      <h3 style="font-family:'Space Grotesk',sans-serif; font-size:1.05rem; margin-bottom:12px;">Today's revenue, by type</h3>
+      <div class="ssdc-detail-row"><span class="label">Products (sales)</span><span class="value">${money(data.productRevenueCents)} · ${data.productLineCount} line items</span></div>
+      <div class="ssdc-detail-row"><span class="label">Services (repairs)</span><span class="value">${money(data.serviceRevenueCents)} · ${data.serviceLineCount} line items</span></div>
+      ${data.otherRevenueCents ? `<div class="ssdc-detail-row"><span class="label">Other</span><span class="value">${money(data.otherRevenueCents)}</span></div>` : ''}
+      <h3 style="font-family:'Space Grotesk',sans-serif; font-size:1.05rem; margin:20px 0 4px;">By channel</h3>
+      ${channelRows}
+    `;
+  }
+
+  function renderRevenueTrend(data) {
+    const detail = document.getElementById('ssdc-detail');
+    const values = data.weeklySeries.map((w) => w.revenueCents);
+    const max = Math.max(...values, 1);
+    const avg = values.reduce((s, v) => s + v, 0) / (values.length || 1);
+    const bars = data.weeklySeries.map((w) => {
+      const pct = Math.max((w.revenueCents / max) * 100, 2);
+      const cls = w.revenueCents >= avg ? 'above-avg' : 'below-avg';
+      const label = new Date(w.weekStart).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      return `<div class="ssdc-chart-bar ${cls}" style="height:${pct}%" title="Week of ${label}: ${money(w.revenueCents)}"></div>`;
+    }).join('');
+    detail.innerHTML = `
+      <h3 style="font-family:'Space Grotesk',sans-serif; font-size:1.05rem; margin-bottom:12px;">Earnings over time</h3>
+      <div class="ssdc-totals">
+        <div><div class="num">${money(data.weekCents)}</div><div class="label">Last 7 days</div></div>
+        <div><div class="num">${money(data.monthCents)}</div><div class="label">Last 30 days</div></div>
+        <div><div class="num">${money(data.quarterCents)}</div><div class="label">Last 90 days</div></div>
+      </div>
+      <p style="font-size:0.78rem; color:var(--text-faint); margin-bottom:4px;">Weekly revenue, last 12 weeks (teal = above average, orange = below)</p>
+      <div class="ssdc-chart">${bars}</div>
+    `;
   }
 
   let allOrders = [];
@@ -352,6 +426,8 @@
   }
 
   /* ============ Inquiries (owner + staff) ============ */
+  const INQUIRY_STATUS_LABELS = { new: 'Received', read: 'Read', responded: 'Responded' };
+
   async function loadInquiries() {
     try {
       const inquiries = await api('/api/admin/inquiries');
@@ -362,28 +438,27 @@
           <td>${escapeHtml(i.email)}${i.phone ? `<br><span style="color:var(--text-faint);font-size:0.8em;">${escapeHtml(i.phone)}</span>` : ''}</td>
           <td>${escapeHtml(i.product_name || '—')}</td>
           <td class="specs-cell">${escapeHtml(i.message)}</td>
-          <td><span class="order-status ${i.status === 'read' ? 'order-status-fulfilled' : ''}">${i.status}</span></td>
           <td>
-            <button type="button" data-action="toggle-status">${i.status === 'read' ? 'Mark new' : 'Mark read'}</button>
+            <select class="inquiry-status-select order-status-select" data-status="${i.status}">
+              ${Object.entries(INQUIRY_STATUS_LABELS).map(([val, label]) => `<option value="${val}" ${i.status === val ? 'selected' : ''}>${label}</option>`).join('')}
+            </select>
           </td>
         </tr>
-      `).join('') || '<tr><td colspan="7">No inquiries yet.</td></tr>';
+      `).join('') || '<tr><td colspan="6">No inquiries yet.</td></tr>';
 
-      inquiryRows.querySelectorAll('[data-action="toggle-status"]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          const id = Number(btn.closest('tr').dataset.id);
-          const inquiry = inquiries.find((i) => i.id === id);
-          const next = inquiry.status === 'read' ? 'new' : 'read';
+      inquiryRows.querySelectorAll('.inquiry-status-select').forEach((select) => {
+        select.addEventListener('change', async () => {
+          const id = Number(select.closest('tr').dataset.id);
           try {
-            await api(`/api/admin/inquiries/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: next }) });
-            loadInquiries();
+            await api(`/api/admin/inquiries/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: select.value }) });
           } catch (err) {
             alert(err.message);
+            loadInquiries();
           }
         });
       });
     } catch (err) {
-      inquiryRows.innerHTML = `<tr><td colspan="7" class="admin-error">${err.message}</td></tr>`;
+      inquiryRows.innerHTML = `<tr><td colspan="6" class="admin-error">${err.message}</td></tr>`;
     }
   }
 
@@ -391,8 +466,8 @@
   async function loadPromo() {
     try {
       const promo = await api('/api/admin/promo');
-      document.getElementById('promo-headline').value = promo.headline || '';
-      document.getElementById('promo-subtext').value = promo.subtext || '';
+      document.getElementById('promo-headline').innerHTML = promo.headline || '';
+      document.getElementById('promo-subtext').innerHTML = promo.subtext || '';
       document.getElementById('promo-cta-text').value = promo.cta_text || '';
       document.getElementById('promo-cta-link').value = promo.cta_link || '';
       document.getElementById('promo-enabled').checked = !!promo.enabled;
@@ -418,8 +493,8 @@
     toast.className = 'admin-toast';
 
     const fd = new FormData();
-    fd.append('headline', document.getElementById('promo-headline').value.trim());
-    fd.append('subtext', document.getElementById('promo-subtext').value.trim());
+    fd.append('headline', document.getElementById('promo-headline').innerHTML.trim());
+    fd.append('subtext', document.getElementById('promo-subtext').innerHTML.trim());
     fd.append('cta_text', document.getElementById('promo-cta-text').value.trim());
     fd.append('cta_link', document.getElementById('promo-cta-link').value.trim());
     fd.append('enabled', document.getElementById('promo-enabled').checked ? 'true' : 'false');
@@ -439,6 +514,19 @@
       toast.textContent = err.message;
       toast.classList.add('err');
     }
+  });
+
+  document.querySelectorAll('.richtext-toolbar button').forEach((btn) => {
+    btn.addEventListener('mousedown', (e) => e.preventDefault()); // keep the editor's text selection intact
+    btn.addEventListener('click', () => {
+      const cmd = btn.dataset.cmd;
+      if (cmd === 'link') {
+        const url = prompt('Link URL:');
+        if (url) document.execCommand('createLink', false, url);
+      } else {
+        document.execCommand(cmd, false, null);
+      }
+    });
   });
 
   /* ============ Inventory (owner + staff) ============ */
@@ -462,7 +550,8 @@
       key: c.category,
       label: CATEGORY_LABELS[c.category] || c.category,
       num: c.productCount,
-      sub: `${c.totalStock} in stock`,
+      numUnit: c.productCount === 1 ? 'product listed' : 'products listed',
+      sub: `${c.totalStock} units in stock · click to view`,
       sparkline: c.sales7d,
       gradient: GRADIENT_KEYS[i % GRADIENT_KEYS.length],
       active: selectedCategory === c.category,
@@ -471,7 +560,8 @@
       key: '__services__',
       label: 'Services',
       num: inventoryData.services.count,
-      sub: 'active services',
+      numUnit: inventoryData.services.count === 1 ? 'service offered' : 'services offered',
+      sub: 'click to manage services',
       sparkline: inventoryData.services.sales7d,
       gradient: GRADIENT_KEYS[inventoryData.categories.length % GRADIENT_KEYS.length],
     }));

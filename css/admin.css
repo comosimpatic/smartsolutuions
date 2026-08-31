@@ -196,6 +196,18 @@ body{ background: var(--bg); }
 }
 .channel-badge.channel-in_store{ background: rgba(180,83,9,0.12); color: #b45309; }
 
+.order-status-select{
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--accent);
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .admin-section-head{
   display: flex;
   align-items: center;
@@ -365,6 +377,7 @@ table.admin-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .banner-card-label{ font-size: 0.82rem; font-weight: 600; opacity: 0.92; }
 .banner-card-sparkline{ width: 56px; height: 22px; flex-shrink: 0; opacity: 0.95; }
 .banner-card-num{ font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; }
+.banner-card-num-unit{ font-family: inherit; font-size: 0.72rem; font-weight: 600; opacity: 0.85; }
 .banner-card-sub{ font-size: 0.78rem; opacity: 0.85; }
 
 /* ---- Inventory ---- */
@@ -411,6 +424,74 @@ table.admin-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .donut-legend{ display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; }
 .donut-legend-row{ display: flex; align-items: center; gap: 8px; }
 .donut-legend-dot{ width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ---- Rich text editor ---- */
+.richtext-toolbar{ display: flex; gap: 4px; margin-bottom: 6px; }
+.richtext-toolbar button{
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.richtext-toolbar button:hover{ background: var(--surface-strong); color: var(--accent); }
+.richtext-editor{
+  min-height: 44px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font: inherit;
+  color: var(--text);
+}
+.richtext-editor:focus{ outline: 2px solid var(--accent); outline-offset: 1px; }
+.richtext-editor:empty:before{ content: attr(data-placeholder); color: var(--text-faint); }
+.richtext-editor a{ color: var(--accent); }
+
+/* ---- SSDC revenue detail ---- */
+.ssdc-detail-card{ margin-bottom: 40px; }
+.ssdc-detail-row{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.ssdc-detail-row:last-of-type{ border-bottom: none; }
+.ssdc-detail-row .label{ color: var(--text-dim); }
+.ssdc-detail-row .value{ font-weight: 600; }
+.ssdc-totals{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.ssdc-totals div{ text-align: center; }
+.ssdc-totals .num{ font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; }
+.ssdc-totals .label{ font-size: 0.78rem; color: var(--text-faint); }
+.ssdc-chart{
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 120px;
+  padding-top: 10px;
+}
+.ssdc-chart-bar{
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  min-height: 3px;
+  position: relative;
+}
+.ssdc-chart-bar.above-avg{ background: var(--accent-2); }
+.ssdc-chart-bar.below-avg{ background: var(--accent-3); }
 
 /* ---- Live dashboard ---- */
 .live-dot{

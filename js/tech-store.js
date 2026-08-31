@@ -274,8 +274,8 @@
       const promo = await res.json();
       if (!promo.enabled || !promo.headline) return;
 
-      document.getElementById('tp-promo-headline').textContent = promo.headline;
-      document.getElementById('tp-promo-subtext').textContent = promo.subtext || '';
+      document.getElementById('tp-promo-headline').innerHTML = promo.headline;
+      document.getElementById('tp-promo-subtext').innerHTML = promo.subtext || '';
       const cta = document.getElementById('tp-promo-cta');
       cta.textContent = promo.cta_text || 'Shop now';
       cta.href = promo.cta_link || '#tp-search';
