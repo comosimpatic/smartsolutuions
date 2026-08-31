@@ -531,11 +531,6 @@ table.admin-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .live-feed li.low-stock{ color: #b45309; }
 .live-feed-empty{ color: var(--text-faint); justify-content: center !important; }
 
-.insights-card{ padding: 20px; min-height: 120px; }
-.insights-empty{ color: var(--text-faint); font-size: 0.88rem; }
-.insights-text{ font-size: 0.88rem; line-height: 1.6; white-space: pre-line; }
-.insights-meta{ color: var(--text-faint); font-size: 0.76rem; margin-top: 12px; }
-
 @media (max-width: 900px){
   .live-dash-grid{ grid-template-columns: 1fr; }
 }

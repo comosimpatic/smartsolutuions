@@ -35,9 +35,6 @@ const pool = process.env.DATABASE_URL
   : null;
 
 const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
-const anthropic = process.env.ANTHROPIC_API_KEY
-  ? new (require('@anthropic-ai/sdk'))({ apiKey: process.env.ANTHROPIC_API_KEY })
-  : null;
 
 const LOW_STOCK_THRESHOLD = 3;
 
@@ -314,11 +311,6 @@ function requireDb(req, res, next) {
 
 function requireStripe(req, res, next) {
   if (!stripe) return res.status(503).json({ error: 'Payments are not configured yet.' });
-  next();
-}
-
-function requireAnthropic(req, res, next) {
-  if (!anthropic) return res.status(503).json({ error: 'AI insights are not configured yet.' });
   next();
 }
 
@@ -894,6 +886,15 @@ app.get('/api/admin/orders', requireOwner, requireDb, async (req, res) => {
   res.json(orders.map((o) => ({ ...o, items: itemsByOrder[o.id] || [] })));
 });
 
+// Lightweight, cheap to poll frequently — no AI/Zoho calls, just a DB read.
+app.get('/api/admin/zoho-status', requireOwner, requireDb, async (req, res) => {
+  const { rows } = await pool.query(`
+    SELECT id, customer_name, total_cents, zoho_sync_status, zoho_sync_error, created_at
+    FROM orders ORDER BY created_at DESC LIMIT 10
+  `);
+  res.json(rows);
+});
+
 app.put('/api/admin/orders/:id/fulfillment', requireOwner, requireDb, async (req, res) => {
   const { id } = req.params;
   const status = req.body?.fulfillment_status === 'fulfilled' ? 'fulfilled' : 'unfulfilled';
@@ -993,61 +994,6 @@ app.put('/api/admin/inquiries/:id/status', requireAdmin, requireDb, async (req, 
   const { rows } = await pool.query('UPDATE inquiries SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found' });
   res.json(rows[0]);
-});
-
-/* ---------- Admin API — owner only: AI store insights ---------- */
-let insightsCache = { text: null, generatedAt: null };
-
-app.get('/api/admin/insights', requireOwner, requireDb, (req, res) => {
-  res.json(insightsCache);
-});
-
-app.post('/api/admin/insights', requireOwner, requireDb, requireAnthropic, async (req, res) => {
-  const [todayRes, weekRes, lastWeekRes, topItemsRes, lowStockRes, servicesRes] = await Promise.all([
-    pool.query(`SELECT COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS orders FROM orders WHERE created_at >= date_trunc('day', now())`),
-    pool.query(`SELECT COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS orders FROM orders WHERE created_at >= now() - interval '7 days'`),
-    pool.query(`SELECT COALESCE(SUM(total_cents),0)::int AS revenue_cents, COUNT(*)::int AS orders FROM orders WHERE created_at >= now() - interval '14 days' AND created_at < now() - interval '7 days'`),
-    pool.query(`
-      SELECT oi.name, SUM(oi.quantity)::int AS quantity
-      FROM order_items oi JOIN orders o ON o.id = oi.order_id
-      WHERE o.created_at >= now() - interval '7 days'
-      GROUP BY oi.name ORDER BY quantity DESC LIMIT 5
-    `),
-    pool.query('SELECT name, stock FROM products WHERE stock <= $1 ORDER BY stock ASC LIMIT 10', [LOW_STOCK_THRESHOLD]),
-    pool.query(`
-      SELECT oi.name, SUM(oi.quantity)::int AS quantity
-      FROM order_items oi JOIN orders o ON o.id = oi.order_id
-      WHERE o.created_at >= now() - interval '7 days' AND oi.service_id IS NOT NULL
-      GROUP BY oi.name ORDER BY quantity DESC LIMIT 5
-    `),
-  ]);
-
-  const snapshot = {
-    today: todayRes.rows[0],
-    last7Days: weekRes.rows[0],
-    previous7Days: lastWeekRes.rows[0],
-    topSellingItems7d: topItemsRes.rows,
-    lowStockProducts: lowStockRes.rows,
-    servicesLogged7d: servicesRes.rows,
-  };
-
-  const message = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
-    max_tokens: 400,
-    system:
-      'You are a store operations assistant for a phone/computer repair and resale shop. Given a JSON snapshot of ' +
-      'today\'s and this week\'s sales, top-selling items, low-stock products and repair services logged, write a short, ' +
-      'plain-English summary for the owner: 3-5 bullet points (use "-" not markdown headers), covering notable sales ' +
-      'trends and anything worth restocking or watching. No preamble, no closing remarks, just the bullets.',
-    messages: [{ role: 'user', content: JSON.stringify(snapshot) }],
-  });
-
-  const textBlock = message.content.find((b) => b.type === 'text');
-  insightsCache = {
-    text: textBlock && textBlock.type === 'text' ? textBlock.text.trim() : 'No insights available.',
-    generatedAt: new Date().toISOString(),
-  };
-  res.json(insightsCache);
 });
 
 app.get('/admin', (req, res) => {

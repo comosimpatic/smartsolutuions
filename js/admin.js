@@ -103,7 +103,15 @@
       document.getElementById(btn).classList.toggle('active', key === name);
       document.getElementById(panel).hidden = key !== name;
     });
-    if (name === 'overview') { ssdcOpenCard = null; document.getElementById('ssdc-detail').hidden = true; loadOverview(); loadOrders(); loadInsights(); }
+    if (name === 'overview') {
+      ssdcOpenCard = null;
+      document.getElementById('ssdc-detail').hidden = true;
+      loadOverview();
+      loadOrders();
+      startZohoStatusPolling();
+    } else {
+      stopZohoStatusPolling();
+    }
     if (name === 'products') {
       selectedCategory = null;
       document.getElementById('inventory-detail').hidden = true;
@@ -236,49 +244,38 @@
     }).join('');
   }
 
-  /* ============ AI insights (owner) ============ */
-  async function loadInsights() {
+  /* ============ Zoho sync activity (owner) — auto-refreshing, no AI, cheap DB read ============ */
+  const ZOHO_FEED_STATUS_LABELS = { synced: 'Synced', pending: 'Pending', failed: 'Failed', unconfigured: 'Not connected' };
+  let zohoStatusInterval = null;
+
+  async function loadZohoStatus() {
+    const feed = document.getElementById('zoho-status-feed');
+    const dot = document.getElementById('zoho-status-dot');
     try {
-      const data = await api('/api/admin/insights');
-      renderInsights(data);
+      const orders = await api('/api/admin/zoho-status');
+      if (dot) dot.classList.remove('offline');
+      feed.innerHTML = orders.map((o) => {
+        const label = ZOHO_FEED_STATUS_LABELS[o.zoho_sync_status] || o.zoho_sync_status;
+        const cls = o.zoho_sync_status === 'failed' ? 'low-stock' : '';
+        const time = new Date(o.created_at).toLocaleTimeString();
+        return `<li class="${cls}" title="${escapeHtml(o.zoho_sync_error || '')}"><span>${escapeHtml(o.customer_name || 'Walk-in')} — ${money(o.total_cents)}: ${label}</span><span class="live-feed-time">${time}</span></li>`;
+      }).join('') || '<li class="live-feed-empty">No orders yet.</li>';
     } catch (err) {
-      document.getElementById('insights-empty').textContent = err.message;
+      if (dot) dot.classList.add('offline');
+      feed.innerHTML = `<li class="live-feed-empty">${escapeHtml(err.message)}</li>`;
     }
   }
 
-  function renderInsights(data) {
-    const empty = document.getElementById('insights-empty');
-    const textEl = document.getElementById('insights-text');
-    const meta = document.getElementById('insights-meta');
-    if (data && data.text) {
-      empty.hidden = true;
-      textEl.hidden = false;
-      textEl.textContent = data.text;
-      meta.textContent = `Generated ${new Date(data.generatedAt).toLocaleString()}`;
-    } else {
-      empty.hidden = false;
-      textEl.hidden = true;
-      meta.textContent = '';
-    }
+  function startZohoStatusPolling() {
+    stopZohoStatusPolling();
+    loadZohoStatus();
+    zohoStatusInterval = setInterval(loadZohoStatus, 30000);
   }
 
-  document.getElementById('insights-refresh-btn').addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    btn.disabled = true;
-    const original = btn.textContent;
-    btn.textContent = 'Generating…';
-    try {
-      const data = await api('/api/admin/insights', { method: 'POST' });
-      renderInsights(data);
-    } catch (err) {
-      document.getElementById('insights-empty').hidden = false;
-      document.getElementById('insights-empty').textContent = err.message;
-      document.getElementById('insights-text').hidden = true;
-    } finally {
-      btn.disabled = false;
-      btn.textContent = original;
-    }
-  });
+  function stopZohoStatusPolling() {
+    if (zohoStatusInterval) clearInterval(zohoStatusInterval);
+    zohoStatusInterval = null;
+  }
 
   /* ============ Overview (owner) ============ */
   let ssdcOpenCard = null;
