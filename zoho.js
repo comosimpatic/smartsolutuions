@@ -107,11 +107,11 @@ async function createInvoice({ contactId, lineItems, referenceNumber }) {
 // Fire-and-forget from the caller's perspective: never throws, always
 // resolves after writing a status back onto the order row.
 async function syncOrderToZoho(pool, orderId) {
-  if (!configured) {
-    await pool.query(`UPDATE orders SET zoho_sync_status = 'unconfigured' WHERE id = $1`, [orderId]);
-    return;
-  }
   try {
+    if (!configured) {
+      await pool.query(`UPDATE orders SET zoho_sync_status = 'unconfigured' WHERE id = $1`, [orderId]);
+      return;
+    }
     const { rows: orderRows } = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
     const order = orderRows[0];
     if (!order) return;

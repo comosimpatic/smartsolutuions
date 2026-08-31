@@ -483,7 +483,7 @@ app.get('/api/checkout/confirm', requireDb, requireStripe, async (req, res) => {
   }
 
   broadcastEvent('sale', { channel: 'online', total_cents: order.total_cents, items: itemRows });
-  zoho.syncOrderToZoho(pool, order.id); // fire-and-forget — never blocks the checkout response
+  zoho.syncOrderToZoho(pool, order.id).catch((err) => console.error('Zoho sync (unexpected):', err.message)); // fire-and-forget — never blocks the checkout response
   res.json({ order, items: itemRows });
 });
 
@@ -961,7 +961,7 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
   }
 
   broadcastEvent('sale', { channel: 'in_store', total_cents: order.total_cents, items: itemRows });
-  zoho.syncOrderToZoho(pool, order.id); // fire-and-forget — never blocks the sale response/receipt
+  zoho.syncOrderToZoho(pool, order.id).catch((err) => console.error('Zoho sync (unexpected):', err.message)); // fire-and-forget — never blocks the sale response/receipt
   res.status(201).json({ order, items: itemRows });
 });
 
