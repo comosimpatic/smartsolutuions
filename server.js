@@ -938,8 +938,8 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
       return res.status(400).json({ error: 'Each line item needs a name and a valid price' });
     }
     total += price_cents * quantity;
-    const productId = Number.isFinite(Number(item.product_id)) ? Number(item.product_id) : null;
-    const serviceId = Number.isFinite(Number(item.service_id)) ? Number(item.service_id) : null;
+    const productId = Number(item.product_id) > 0 ? Number(item.product_id) : null;
+    const serviceId = Number(item.service_id) > 0 ? Number(item.service_id) : null;
     cleanItems.push({ productId, serviceId, name, price_cents, quantity });
   }
 
