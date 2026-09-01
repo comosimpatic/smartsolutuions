@@ -419,6 +419,64 @@ section{ padding: 110px 0; position: relative; }
 .card-link span{ transition: transform .25s var(--ease); }
 .card-link:hover span{ transform: translateX(3px); }
 
+/* ============ Partnership ============ */
+.partnership-grid{
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 48px;
+  align-items: start;
+  margin-top: 40px;
+}
+.partnership-timeline{ grid-template-columns: repeat(2, 1fr); gap: 28px 24px; }
+.pricing-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 22px;
+  margin-top: 56px;
+}
+.pricing-card{
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  text-align: center;
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+}
+.pricing-card h3{ font-size: 1.05rem; color: var(--text-dim); font-weight: 600; }
+.pricing-featured{ border-color: var(--accent); box-shadow: 0 20px 40px -20px rgba(29,78,216,0.28); }
+.pricing-badge{
+  position: absolute;
+  top: -13px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 999px;
+}
+.pricing-price{
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2rem;
+  color: var(--text);
+  margin: 14px 0 10px;
+}
+.pricing-price span{ font-size: 0.85rem; font-weight: 500; color: var(--text-faint); }
+.pricing-includes{ color: var(--text-dim); font-size: 0.9rem; line-height: 1.5; }
+.partnership-addons, .partnership-proof{ margin-top: 48px; }
+.addon-tags{ display: flex; flex-wrap: wrap; gap: 10px; }
+.addon-tag{
+  background: var(--surface-strong);
+  color: var(--accent);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 /* ============ Process / timeline ============ */
 .process{ background: var(--bg-alt); }
 .timeline{
@@ -774,6 +832,7 @@ section{ padding: 110px 0; position: relative; }
   .card-grid{ grid-template-columns: repeat(2, 1fr); }
   .timeline{ grid-template-columns: repeat(2, 1fr); row-gap: 40px; }
   .about-inner{ grid-template-columns: 1fr; }
+  .partnership-grid{ grid-template-columns: 1fr; }
   .about-visual{ order: -1; height: 260px; }
   .hero-stats{ gap: 32px; }
 }
