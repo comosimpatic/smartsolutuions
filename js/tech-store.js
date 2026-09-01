@@ -19,7 +19,7 @@
     const lowStock = !outOfStock && p.stock <= 3;
     return `
       <article class="tp-card" data-id="${p.id}">
-        <div class="tp-card-media${p.has_image ? ' tp-card-media-photo' : ''}">
+        <div class="tp-card-media${p.image_src ? ' tp-card-media-photo' : ''}">
           ${p.image_src ? `<img src="${escapeHtml(p.image_src)}" alt="${escapeHtml(p.name)}" loading="lazy">` : (p.icon || '📦')}
         </div>
         <span class="tp-card-condition${conditionClass}">${escapeHtml(p.condition)}</span>
@@ -82,7 +82,7 @@
   function openModal(p) {
     currentModalProduct = p;
     const media = document.getElementById('tp-modal-media');
-    media.className = `tp-modal-media${p.has_image ? ' tp-card-media-photo' : ''}`;
+    media.className = `tp-modal-media${p.image_src ? ' tp-card-media-photo' : ''}`;
     media.innerHTML = p.image_src ? `<img src="${escapeHtml(p.image_src)}" alt="${escapeHtml(p.name)}">` : (p.icon || '📦');
 
     document.getElementById('tp-modal-condition').textContent = p.condition;

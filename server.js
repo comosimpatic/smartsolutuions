@@ -39,9 +39,9 @@ const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STR
 const LOW_STOCK_THRESHOLD = 3;
 
 const CATEGORY_IMAGE = {
-  phones: '/assets/products/phone.svg',
-  laptops: '/assets/products/laptop.svg',
-  parts: '/assets/products/parts.svg',
+  phones: '/assets/products/phone.jpg',
+  laptops: '/assets/products/laptop.jpg',
+  parts: '/assets/products/parts.jpg',
 };
 
 const PRODUCT_COLUMNS = `
