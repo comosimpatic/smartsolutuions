@@ -245,8 +245,18 @@ async function initDb() {
     console.log(`Seeded ${SEED_PRODUCTS.length} products.`);
   }
 
+  // Backfill missing image_url, and self-heal rows still pointing at a since-replaced
+  // default placeholder path (e.g. the old .svg icons swapped for .jpg photos).
+  const OLD_CATEGORY_IMAGE = {
+    phones: '/assets/products/phone.svg',
+    laptops: '/assets/products/laptop.svg',
+    parts: '/assets/products/parts.svg',
+  };
   for (const [category, imageUrl] of Object.entries(CATEGORY_IMAGE)) {
-    await pool.query('UPDATE products SET image_url = $1 WHERE category = $2 AND image_url IS NULL', [imageUrl, category]);
+    await pool.query(
+      'UPDATE products SET image_url = $1 WHERE category = $2 AND (image_url IS NULL OR image_url = $3)',
+      [imageUrl, category, OLD_CATEGORY_IMAGE[category] || null]
+    );
   }
 }
 
