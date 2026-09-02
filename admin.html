@@ -71,6 +71,7 @@
         <button type="button" class="admin-tab" id="tab-settings" data-owner-only>Settings</button>
         <button type="button" class="admin-tab" id="tab-products">Inventory</button>
         <button type="button" class="admin-tab" id="tab-promo">Promo banner</button>
+        <button type="button" class="admin-tab" id="tab-content" data-owner-only>Site content</button>
       </div>
 
       <h1 id="dashboard-title">Tech Store</h1>
@@ -453,6 +454,60 @@
             <div style="display:flex; gap:12px; align-items:center;">
               <button type="submit" class="btn btn-primary">Save banner</button>
               <p class="admin-toast" id="promo-toast"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ============ Site content (owner only) ============ -->
+      <div id="content-panel" hidden>
+        <div class="admin-section-head">
+          <h2>Website copy</h2>
+          <p class="admin-section-note">Edit the marketing copy shown on the public homepage. Changes go live immediately.</p>
+        </div>
+        <div class="admin-form-card">
+          <form id="content-form">
+            <div class="admin-form-grid">
+              <div class="admin-field span-2">
+                <label for="content-hero_lead">Hero — intro paragraph</label>
+                <div class="richtext-toolbar" data-target="content-hero_lead">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <button type="button" data-cmd="link" title="Link">🔗</button>
+                </div>
+                <div class="richtext-editor" id="content-hero_lead" contenteditable="true" data-content-key="hero_lead"></div>
+              </div>
+              <div class="admin-field span-2">
+                <label for="content-services_intro">Services — section intro</label>
+                <div class="richtext-toolbar" data-target="content-services_intro">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <button type="button" data-cmd="link" title="Link">🔗</button>
+                </div>
+                <div class="richtext-editor" id="content-services_intro" contenteditable="true" data-content-key="services_intro"></div>
+              </div>
+              <div class="admin-field span-2">
+                <label for="content-partnership_intro">Partnership — section intro</label>
+                <div class="richtext-toolbar" data-target="content-partnership_intro">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <button type="button" data-cmd="link" title="Link">🔗</button>
+                </div>
+                <div class="richtext-editor" id="content-partnership_intro" contenteditable="true" data-content-key="partnership_intro"></div>
+              </div>
+              <div class="admin-field span-2">
+                <label for="content-about_body">About — section intro</label>
+                <div class="richtext-toolbar" data-target="content-about_body">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <button type="button" data-cmd="link" title="Link">🔗</button>
+                </div>
+                <div class="richtext-editor" id="content-about_body" contenteditable="true" data-content-key="about_body"></div>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <button type="submit" class="btn btn-primary">Save changes</button>
+              <p class="admin-toast" id="content-toast"></p>
             </div>
           </form>
         </div>

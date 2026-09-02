@@ -96,6 +96,7 @@
     inquiries: { btn: 'tab-inquiries', panel: 'inquiries-panel' },
     settings: { btn: 'tab-settings', panel: 'settings-panel' },
     promo: { btn: 'tab-promo', panel: 'promo-panel' },
+    content: { btn: 'tab-content', panel: 'content-panel' },
   };
 
   function activateTab(name) {
@@ -119,6 +120,7 @@
       loadProducts();
     }
     if (name === 'promo') { loadPromo(); }
+    if (name === 'content') { loadSiteContent(); }
     if (name === 'services') { loadServices(); }
     if (name === 'sale') { loadSaleProducts(); document.getElementById('sale-scan-input').focus(); }
     if (name === 'inquiries') { loadInquiries(); }
@@ -131,6 +133,7 @@
   document.getElementById('tab-inquiries').addEventListener('click', () => activateTab('inquiries'));
   document.getElementById('tab-settings').addEventListener('click', () => activateTab('settings'));
   document.getElementById('tab-promo').addEventListener('click', () => activateTab('promo'));
+  document.getElementById('tab-content').addEventListener('click', () => activateTab('content'));
 
   function showDashboard(role) {
     loginView.hidden = true;
@@ -526,6 +529,42 @@
       toast.textContent = 'Banner saved.';
       toast.classList.add('ok');
       loadPromo();
+    } catch (err) {
+      toast.textContent = err.message;
+      toast.classList.add('err');
+    }
+  });
+
+  /* ============ Site content (owner only) ============ */
+  async function loadSiteContent() {
+    const toast = document.getElementById('content-toast');
+    toast.textContent = '';
+    toast.className = 'admin-toast';
+    try {
+      const blocks = await api('/api/admin/site-content');
+      blocks.forEach((block) => {
+        const el = document.getElementById(`content-${block.key}`);
+        if (el) el.innerHTML = block.html || '';
+      });
+    } catch (err) {
+      toast.textContent = err.message;
+      toast.classList.add('err');
+    }
+  }
+
+  document.getElementById('content-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const toast = document.getElementById('content-toast');
+    toast.textContent = '';
+    toast.className = 'admin-toast';
+    try {
+      const editors = document.querySelectorAll('#content-panel [data-content-key]');
+      await Promise.all(Array.from(editors).map((el) => api(`/api/admin/site-content/${el.dataset.contentKey}`, {
+        method: 'PUT',
+        body: JSON.stringify({ html: el.innerHTML.trim() }),
+      })));
+      toast.textContent = 'Saved.';
+      toast.classList.add('ok');
     } catch (err) {
       toast.textContent = err.message;
       toast.classList.add('err');

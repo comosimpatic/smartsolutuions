@@ -10,6 +10,20 @@
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+  /* ---------- Editable site content (rich text from admin) ---------- */
+  const contentEls = document.querySelectorAll('[data-content-key]');
+  if (contentEls.length) {
+    fetch('/api/site-content')
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((map) => {
+        contentEls.forEach((el) => {
+          const html = map[el.dataset.contentKey];
+          if (html) el.innerHTML = html;
+        });
+      })
+      .catch(() => {});
+  }
+
   /* ---------- Hero background video speed ---------- */
   const heroVideo = document.querySelector('.hero-bg-video');
   if (heroVideo) heroVideo.playbackRate = 1.6;

@@ -80,6 +80,38 @@ function sanitizeRichText(html) {
   return sanitizeHtml(String(html || ''), RICH_TEXT_OPTIONS).trim();
 }
 
+const SITE_CONTENT_BLOCKS = [
+  {
+    key: 'hero_lead',
+    label: 'Hero — intro paragraph',
+    default: `Smart Solutions is a technology consultancy specializing in AI, cloud
+        architecture and custom software — turning ambitious ideas into
+        production-grade systems.`,
+  },
+  {
+    key: 'services_intro',
+    label: 'Services — section intro',
+    default: `From strategy to shipped product — one team, end to end.`,
+  },
+  {
+    key: 'partnership_intro',
+    label: 'Partnership — section intro',
+    default: `We build custom PWAs for taxis, restaurants &amp; bars, electronics retail, and
+        property &amp; hospitality businesses across the Caribbean — Next.js, deployed on
+        Vercel, with WhatsApp API integration as a core feature. Phone/IT repair and
+        live dashboard integration come standard, so you get both the software and the
+        hands-on support to keep it running.`,
+  },
+  {
+    key: 'about_body',
+    label: 'About — section intro',
+    default: `We're a team of engineers, architects and strategists who believe the
+        best technology partners write code alongside you, not just slides
+        about it. No bloated teams, no jargon — just systems that work,
+        delivered by people who'll still answer the phone after launch.`,
+  },
+];
+
 async function normalizePromoImage(buffer) {
   const img = sharp(buffer).rotate().resize(1000, 1000, { fit: 'inside', withoutEnlargement: true });
   const meta = await img.metadata();
@@ -222,6 +254,20 @@ async function initDb() {
     );
   `);
   await pool.query(`INSERT INTO promo_banner (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS site_content (
+      content_key TEXT PRIMARY KEY,
+      html TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+  for (const block of SITE_CONTENT_BLOCKS) {
+    await pool.query(
+      'INSERT INTO site_content (content_key, html) VALUES ($1, $2) ON CONFLICT (content_key) DO NOTHING',
+      [block.key, sanitizeRichText(block.default)]
+    );
+  }
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS admin_credentials (
@@ -391,6 +437,13 @@ app.get('/api/promo/image', requireDb, async (req, res) => {
   res.setHeader('Content-Type', row.image_mime || 'image/png');
   res.setHeader('Cache-Control', 'public, max-age=3600');
   res.end(row.image_data);
+});
+
+app.get('/api/site-content', requireDb, async (req, res) => {
+  const { rows } = await pool.query('SELECT content_key, html FROM site_content');
+  const map = {};
+  for (const row of rows) map[row.content_key] = row.html;
+  res.json(map);
 });
 
 /* ---------- Checkout (Stripe) ---------- */
@@ -855,6 +908,31 @@ app.get('/api/admin/promo', requireAdmin, requireDb, async (req, res) => {
   const row = rows[0];
   const version = row.updated_at ? new Date(row.updated_at).getTime() : 0;
   res.json({ ...row, image_src: row.has_image ? `/api/promo/image?v=${version}` : null });
+});
+
+app.get('/api/admin/site-content', requireOwner, requireDb, async (req, res) => {
+  const { rows } = await pool.query('SELECT content_key, html, updated_at FROM site_content');
+  const byKey = Object.fromEntries(rows.map((r) => [r.content_key, r]));
+  const blocks = SITE_CONTENT_BLOCKS.map((b) => ({
+    key: b.key,
+    label: b.label,
+    html: byKey[b.key] ? byKey[b.key].html : sanitizeRichText(b.default),
+    updated_at: byKey[b.key] ? byKey[b.key].updated_at : null,
+  }));
+  res.json(blocks);
+});
+
+app.put('/api/admin/site-content/:key', requireOwner, requireDb, async (req, res) => {
+  const block = SITE_CONTENT_BLOCKS.find((b) => b.key === req.params.key);
+  if (!block) return res.status(404).json({ error: 'Unknown content block' });
+  const html = sanitizeRichText(req.body?.html);
+  const { rows } = await pool.query(
+    `INSERT INTO site_content (content_key, html, updated_at) VALUES ($1, $2, now())
+     ON CONFLICT (content_key) DO UPDATE SET html = $2, updated_at = now()
+     RETURNING content_key, html, updated_at`,
+    [block.key, html]
+  );
+  res.json({ key: block.key, label: block.label, ...rows[0] });
 });
 
 app.put('/api/admin/promo', requireAdmin, requireDb, upload.single('image'), async (req, res) => {
