@@ -85,6 +85,12 @@
             <label for="sale-scan-input">Scan barcode</label>
             <input type="text" id="sale-scan-input" placeholder="Scan an item, or click a line below to pick one manually" autocomplete="off">
           </div>
+          <div class="admin-field" style="margin-bottom: 20px; position: relative;">
+            <label for="sale-part-search">Find a part (brand, model or part type)</label>
+            <input type="text" id="sale-part-search" placeholder="e.g. iPhone 13 battery, Galaxy S22 screen…" autocomplete="off">
+            <p class="admin-section-note" id="sale-part-hint" hidden></p>
+            <div class="sale-part-results" id="sale-part-results" hidden></div>
+          </div>
           <form id="sale-form">
             <div class="admin-form-grid">
               <div class="admin-field">
@@ -114,7 +120,7 @@
 
             <div class="sale-total-row">
               <span>Total</span>
-              <strong id="sale-total">$0.00</strong>
+              <strong id="sale-total">EC$0.00</strong>
             </div>
 
             <div style="display:flex; gap:12px; align-items:center; margin-top:16px;">
@@ -528,7 +534,12 @@
                   <option value="">Select brand…</option>
                   <option value="iPhone">iPhone</option>
                   <option value="Samsung">Samsung</option>
+                  <option value="__new__">+ New brand…</option>
                 </select>
+              </div>
+              <div class="admin-field" id="parts-import-brand-new-wrap" hidden>
+                <label for="parts-import-brand-new">New brand name</label>
+                <input type="text" id="parts-import-brand-new" placeholder="e.g. Google Pixel">
               </div>
               <div class="admin-field">
                 <label for="parts-import-file">Parts list file (.xlsx or .csv)</label>
@@ -546,6 +557,7 @@
           <h2>Parts catalog</h2>
           <input type="search" class="admin-search" id="parts-search" placeholder="Search model, part, or item #…">
         </div>
+        <p class="admin-section-note" id="parts-search-hint" hidden></p>
         <div class="admin-form-card" style="margin-bottom:16px;">
           <div class="admin-form-grid">
             <div class="admin-field">

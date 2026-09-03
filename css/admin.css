@@ -307,6 +307,32 @@ table.admin-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .admin-image-preview label{ display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
 /* ---- Record a sale ---- */
+.sale-part-results{
+  position: absolute;
+  z-index: 20;
+  left: 0; right: 0; top: 100%;
+  margin-top: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 16px 32px -16px rgba(16,22,43,0.3);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.sale-part-result{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.sale-part-result:last-child{ border-bottom: none; }
+.sale-part-result:hover{ background: var(--surface-strong); }
+.sale-part-result-name{ font-weight: 600; }
+.sale-part-result-meta{ color: var(--text-faint); font-size: 0.78rem; margin-top: 2px; }
 .sale-lines{ display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
 .sale-line{
   display: grid;

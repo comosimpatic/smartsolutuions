@@ -64,6 +64,35 @@ const PART_CATEGORY_IMAGE = {
 };
 const PART_CATEGORY_FALLBACK_IMAGE = '/assets/products/parts.jpg';
 
+// Common everyday terms people search with that don't literally appear in the
+// catalog's category names — e.g. someone types "screen" or "lcd" but the
+// category is "Display". Substring-matched against the query (lowercased).
+const PART_SEARCH_SYNONYMS = {
+  lcd: 'Display', screen: 'Display', glass: 'Display', digitizer: 'Display',
+  housing: 'Enclosure', 'back cover': 'Enclosure', 'back panel': 'Enclosure', frame: 'Enclosure', chassis: 'Enclosure', 'rear panel': 'Enclosure',
+  battery: 'Power', batt: 'Power',
+  cam: 'Camera', lens: 'Camera',
+  motherboard: 'Core', mainboard: 'Core', 'logic board': 'Core', 'main board': 'Core',
+  speaker: 'Haptics/Audio', earpiece: 'Haptics/Audio', mic: 'Haptics/Audio', microphone: 'Haptics/Audio', vibrator: 'Haptics/Audio', taptic: 'Haptics/Audio', haptic: 'Haptics/Audio',
+  'volume button': 'Buttons', 'power button': 'Buttons', 'mute switch': 'Buttons', 'side button': 'Buttons',
+  'charging port': 'Charging', 'usb port': 'Charging', 'usb-c': 'Charging', 'lightning port': 'Charging', 'charge port': 'Charging',
+  antenna: 'RF', wifi: 'RF', 'wi-fi': 'RF',
+  fingerprint: 'Sensors', proximity: 'Sensors', 'face id': 'Sensors', gyroscope: 'Sensors', accelerometer: 'Sensors',
+};
+
+function expandPartSearch(q) {
+  const lower = q.toLowerCase();
+  const categories = new Set();
+  const hints = [];
+  for (const [term, category] of Object.entries(PART_SEARCH_SYNONYMS)) {
+    if (lower.includes(term) && category.toLowerCase() !== lower) {
+      categories.add(category);
+      hints.push({ typed: term, matched: category });
+    }
+  }
+  return { categories: [...categories], hints };
+}
+
 const PRODUCT_COLUMNS = `
   id, category, name, specs, price_cents, condition, icon, image_url, stock, barcode,
   created_at, updated_at, (image_data IS NOT NULL) AS has_image
@@ -263,6 +292,7 @@ async function initDb() {
     );
   `);
   await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS service_id INTEGER REFERENCES services(id) ON DELETE SET NULL`);
+  await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS part_id INTEGER REFERENCES parts_catalog(id) ON DELETE SET NULL`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS inquiries (
@@ -486,26 +516,36 @@ app.get('/api/site-content', requireDb, async (req, res) => {
 
 app.get('/api/parts-search', requireDb, async (req, res) => {
   const q = String(req.query.q || '').trim();
-  if (q.length < 2) return res.json([]);
+  if (q.length < 2) return res.json({ hints: [], items: [] });
+  const { categories: synonymCategories, hints } = expandPartSearch(q);
+  const params = [`%${q}%`];
+  let where = `(brand || ' ' || model || ' ' || part_name || ' ' || category) ILIKE $1`;
+  if (synonymCategories.length) {
+    params.push(synonymCategories);
+    where += ` OR category = ANY($${params.length})`;
+  }
   const { rows } = await pool.query(
     `SELECT brand, model, category, part_name, price_cents, stock, image_url,
             'PT-' || LPAD(id::text, 6, '0') AS item_number
      FROM parts_catalog
-     WHERE (brand || ' ' || model || ' ' || part_name || ' ' || category) ILIKE $1
+     WHERE ${where}
      ORDER BY brand, model, category, part_name
      LIMIT 30`,
-    [`%${q}%`]
+    params
   );
-  res.json(rows.map((r) => ({
-    item_number: r.item_number,
-    brand: r.brand,
-    model: r.model,
-    category: r.category,
-    part_name: r.part_name,
-    price_cents: r.price_cents,
-    in_stock: r.stock > 0,
-    image_src: r.image_url || PART_CATEGORY_IMAGE[r.category] || PART_CATEGORY_FALLBACK_IMAGE,
-  })));
+  res.json({
+    hints,
+    items: rows.map((r) => ({
+      item_number: r.item_number,
+      brand: r.brand,
+      model: r.model,
+      category: r.category,
+      part_name: r.part_name,
+      price_cents: r.price_cents,
+      in_stock: r.stock > 0,
+      image_src: r.image_url || PART_CATEGORY_IMAGE[r.category] || PART_CATEGORY_FALLBACK_IMAGE,
+    })),
+  });
 });
 
 /* ---------- Checkout (Stripe) ---------- */
@@ -1047,9 +1087,17 @@ app.get('/api/admin/parts-catalog', requireAdmin, requireDb, async (req, res) =>
 
   const conditions = [];
   const params = [];
+  let hints = [];
   if (q) {
     params.push(`%${q}%`);
-    conditions.push(`(brand || ' ' || model || ' ' || part_name || ' ' || category) ILIKE $${params.length}`);
+    const { categories: synonymCategories, hints: qHints } = expandPartSearch(q);
+    hints = qHints;
+    if (synonymCategories.length) {
+      params.push(synonymCategories);
+      conditions.push(`((brand || ' ' || model || ' ' || part_name || ' ' || category) ILIKE $${params.length - 1} OR category = ANY($${params.length}))`);
+    } else {
+      conditions.push(`(brand || ' ' || model || ' ' || part_name || ' ' || category) ILIKE $${params.length}`);
+    }
   }
   if (brand) { params.push(brand); conditions.push(`brand = $${params.length}`); }
   if (model) { params.push(model); conditions.push(`model = $${params.length}`); }
@@ -1065,7 +1113,7 @@ app.get('/api/admin/parts-catalog', requireAdmin, requireDb, async (req, res) =>
      LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
     [...params, limit, offset]
   );
-  res.json({ total: countRows[0].count, page, limit, items: rows.map(withPartImageSrc) });
+  res.json({ total: countRows[0].count, page, limit, hints, items: rows.map(withPartImageSrc) });
 });
 
 app.put('/api/admin/parts-catalog/:id', requireAdmin, requireDb, async (req, res) => {
@@ -1203,7 +1251,8 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
     total += price_cents * quantity;
     const productId = Number(item.product_id) > 0 ? Number(item.product_id) : null;
     const serviceId = Number(item.service_id) > 0 ? Number(item.service_id) : null;
-    cleanItems.push({ productId, serviceId, name, price_cents, quantity });
+    const partId = Number(item.part_id) > 0 ? Number(item.part_id) : null;
+    cleanItems.push({ productId, serviceId, partId, name, price_cents, quantity });
   }
 
   try {
@@ -1218,8 +1267,8 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
     const itemRows = [];
     for (const it of cleanItems) {
       await pool.query(
-        'INSERT INTO order_items (order_id, product_id, service_id, name, price_cents, quantity) VALUES ($1,$2,$3,$4,$5,$6)',
-        [order.id, it.productId, it.serviceId, it.name, it.price_cents, it.quantity]
+        'INSERT INTO order_items (order_id, product_id, service_id, part_id, name, price_cents, quantity) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+        [order.id, it.productId, it.serviceId, it.partId, it.name, it.price_cents, it.quantity]
       );
       itemRows.push({ name: it.name, price_cents: it.price_cents, quantity: it.quantity, is_service: !!it.serviceId });
       if (it.productId) {
@@ -1230,6 +1279,9 @@ app.post('/api/admin/orders', requireAdmin, requireDb, async (req, res) => {
         if (stockRows[0] && stockRows[0].stock <= LOW_STOCK_THRESHOLD) {
           broadcastEvent('low_stock', { name: stockRows[0].name, stock: stockRows[0].stock });
         }
+      }
+      if (it.partId) {
+        await pool.query('UPDATE parts_catalog SET stock = GREATEST(stock - $1, 0), updated_at = now() WHERE id = $2', [it.quantity, it.partId]);
       }
     }
 

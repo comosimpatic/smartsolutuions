@@ -28,7 +28,7 @@
         ${lowStock ? `<p class="tp-stock-low">Only ${p.stock} left</p>` : ''}
         ${outOfStock ? `<p class="tp-stock-out">Out of stock</p>` : ''}
         <div class="tp-card-footer">
-          <span class="tp-price">$${(p.price_cents / 100).toFixed(2)}</span>
+          <span class="tp-price">EC$${(p.price_cents / 100).toFixed(2)}</span>
           <button type="button" class="btn btn-primary tp-add-btn" data-id="${p.id}" ${outOfStock ? 'disabled' : ''}>
             ${outOfStock ? 'Sold out' : 'Add to cart'}
           </button>
@@ -88,7 +88,7 @@
     document.getElementById('tp-modal-condition').textContent = p.condition;
     document.getElementById('tp-modal-name').textContent = p.name;
     document.getElementById('tp-modal-specs').textContent = p.specs || '';
-    document.getElementById('tp-modal-price').textContent = `$${(p.price_cents / 100).toFixed(2)}`;
+    document.getElementById('tp-modal-price').textContent = `EC$${(p.price_cents / 100).toFixed(2)}`;
 
     const outOfStock = p.stock <= 0;
     const lowStock = !outOfStock && p.stock <= 3;
@@ -307,14 +307,17 @@
       resultsEl.innerHTML = `<p class="tp-parts-results-empty">Searching…</p>`;
       try {
         const res = await fetch(`/api/parts-search?q=${encodeURIComponent(q)}`);
-        const items = await res.json();
+        const { hints, items } = await res.json();
+        const hintHtml = hints && hints.length
+          ? `<p class="tp-parts-results-hint">Also showing results for: ${[...new Set(hints.map((h) => h.matched))].map(escapeHtml).join(', ')}</p>`
+          : '';
         if (!items.length) {
-          resultsEl.innerHTML = `<p class="tp-parts-results-empty">No matching parts. Try a different model or component name, or <button type="button" class="tp-inline-link" id="tp-parts-ask-anyway">ask us directly</button>.</p>`;
+          resultsEl.innerHTML = `${hintHtml}<p class="tp-parts-results-empty">No matching parts. Try a different model or component name, or <button type="button" class="tp-inline-link" id="tp-parts-ask-anyway">ask us directly</button>.</p>`;
           const askBtn = document.getElementById('tp-parts-ask-anyway');
           if (askBtn) askBtn.addEventListener('click', () => openInquiry(q));
           return;
         }
-        resultsEl.innerHTML = items.map((item) => {
+        resultsEl.innerHTML = hintHtml + items.map((item) => {
           const name = `${item.brand} ${item.model} — ${item.part_name}`;
           return `
             <div class="tp-parts-result">

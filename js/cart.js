@@ -2,7 +2,7 @@
   'use strict';
 
   const CART_KEY = 'ss_cart_v1';
-  const money = (cents) => `$${(cents / 100).toFixed(2)}`;
+  const money = (cents) => `EC$${(cents / 100).toFixed(2)}`;
 
   function escapeHtml(str) {
     return String(str == null ? '' : str)

@@ -33,7 +33,7 @@
   const imagePreviewImg = document.getElementById('field-image-preview-img');
 
   const CATEGORY_LABELS = { phones: 'Phones', laptops: 'Laptops', parts: 'Parts & accessories' };
-  const money = (cents) => `$${(cents / 100).toFixed(2)}`;
+  const money = (cents) => `EC$${(cents / 100).toFixed(2)}`;
 
   const GRADIENT_KEYS = ['grad-blue', 'grad-teal', 'grad-orange', 'grad-purple', 'grad-pink'];
   const GRADIENT_HEX = { 'grad-blue': '#2563eb', 'grad-teal': '#0d9488', 'grad-orange': '#c2660c', 'grad-purple': '#7c3aed', 'grad-pink': '#db2777' };
@@ -603,6 +603,14 @@
         facets.brands.map((b) => `<option value="${b}">${b}</option>`).join('');
       brandSelect.value = currentBrand;
 
+      const importBrandSelect = document.getElementById('parts-import-brand');
+      const currentImportBrand = importBrandSelect.value;
+      const knownBrands = [...new Set(['iPhone', 'Samsung', ...facets.brands])];
+      importBrandSelect.innerHTML = '<option value="">Select brand…</option>' +
+        knownBrands.map((b) => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('') +
+        '<option value="__new__">+ New brand…</option>';
+      if (currentImportBrand && currentImportBrand !== '__new__') importBrandSelect.value = currentImportBrand;
+
       const categorySelect = document.getElementById('parts-filter-category');
       const currentCategory = categorySelect.value;
       categorySelect.innerHTML = '<option value="">All part types</option>' +
@@ -630,8 +638,16 @@
     return Number.isFinite(cents) && cents !== null ? (cents / 100).toFixed(2) : '';
   }
 
+  async function savePartRow(id, { price_cents, stock }) {
+    return api(`/api/admin/parts-catalog/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ price_cents, stock }),
+    });
+  }
+
   function renderPartsRow(item) {
     const tr = document.createElement('tr');
+    const inStock = item.stock > 0;
     tr.innerHTML = `
       <td>${item.item_number}</td>
       <td>${item.brand}</td>
@@ -640,23 +656,35 @@
       <td>${item.part_name}</td>
       <td><input type="number" min="0" step="0.01" class="parts-price-input" value="${centsToInputValue(item.price_cents)}" style="width:90px;"></td>
       <td><input type="number" min="0" step="1" class="parts-stock-input" value="${item.stock}" style="width:70px;"></td>
-      <td><span class="order-status ${item.stock > 0 ? 'order-status-fulfilled' : ''}">${item.stock > 0 ? 'In stock' : 'Out of stock'}</span></td>
-      <td><button type="button" class="btn btn-ghost parts-save-btn">Save</button></td>
+      <td><span class="order-status ${inStock ? 'order-status-fulfilled' : ''}">${inStock ? 'In stock' : 'Out of stock'}</span></td>
+      <td style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-ghost parts-save-btn">Save</button>
+        <button type="button" class="btn btn-ghost parts-toggle-btn">${inStock ? 'Mark out of stock' : 'Mark in stock'}</button>
+      </td>
     `;
     tr.querySelector('.parts-save-btn').addEventListener('click', async () => {
       const priceInput = tr.querySelector('.parts-price-input');
       const stockInput = tr.querySelector('.parts-stock-input');
       const priceValue = priceInput.value.trim();
       try {
-        const updated = await api(`/api/admin/parts-catalog/${item.id}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            price_cents: priceValue === '' ? '' : Math.round(parseFloat(priceValue) * 100),
-            stock: stockInput.value,
-          }),
+        const updated = await savePartRow(item.id, {
+          price_cents: priceValue === '' ? '' : Math.round(parseFloat(priceValue) * 100),
+          stock: stockInput.value,
         });
-        const newRow = renderPartsRow(updated);
-        tr.replaceWith(newRow);
+        tr.replaceWith(renderPartsRow(updated));
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+    tr.querySelector('.parts-toggle-btn').addEventListener('click', async () => {
+      const priceInput = tr.querySelector('.parts-price-input');
+      const priceValue = priceInput.value.trim();
+      try {
+        const updated = await savePartRow(item.id, {
+          price_cents: priceValue === '' ? '' : Math.round(parseFloat(priceValue) * 100),
+          stock: inStock ? 0 : 1,
+        });
+        tr.replaceWith(renderPartsRow(updated));
       } catch (err) {
         alert(err.message);
       }
@@ -669,6 +697,14 @@
     tbody.innerHTML = `<tr><td colspan="9">Loading…</td></tr>`;
     try {
       const data = await api(`/api/admin/parts-catalog?${partsQueryParams().toString()}`);
+      const hintEl = document.getElementById('parts-search-hint');
+      if (data.hints && data.hints.length) {
+        const uniqueMatches = [...new Set(data.hints.map((h) => h.matched))];
+        hintEl.textContent = `Also matching part type: ${uniqueMatches.join(', ')}`;
+        hintEl.hidden = false;
+      } else {
+        hintEl.hidden = true;
+      }
       tbody.innerHTML = '';
       if (!data.items.length) {
         tbody.innerHTML = `<tr><td colspan="9">No parts match.</td></tr>`;
@@ -700,13 +736,26 @@
   document.getElementById('parts-prev').addEventListener('click', () => { if (partsPage > 1) { partsPage--; loadPartsRows(); } });
   document.getElementById('parts-next').addEventListener('click', () => { partsPage++; loadPartsRows(); });
 
+  document.getElementById('parts-import-brand').addEventListener('change', (e) => {
+    document.getElementById('parts-import-brand-new-wrap').hidden = e.target.value !== '__new__';
+  });
+
   document.getElementById('parts-import-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const toast = document.getElementById('parts-import-toast');
-    toast.textContent = 'Importing… this can take a moment for large files.';
     toast.className = 'admin-toast';
+    const brandSelectValue = document.getElementById('parts-import-brand').value;
+    const brand = brandSelectValue === '__new__'
+      ? document.getElementById('parts-import-brand-new').value.trim()
+      : brandSelectValue;
+    if (!brand) {
+      toast.textContent = 'Select or enter a brand.';
+      toast.classList.add('err');
+      return;
+    }
+    toast.textContent = 'Importing… this can take a moment for large files.';
     const fd = new FormData();
-    fd.append('brand', document.getElementById('parts-import-brand').value);
+    fd.append('brand', brand);
     fd.append('file', document.getElementById('parts-import-file').files[0]);
     try {
       const res = await fetch('/api/admin/parts-catalog/import', { method: 'POST', body: fd });
@@ -716,6 +765,7 @@
       toast.textContent = `Imported: ${data.inserted} new, ${data.updated} updated, ${data.skipped} skipped (of ${data.total} rows).`;
       toast.classList.add('ok');
       document.getElementById('parts-import-form').reset();
+      document.getElementById('parts-import-brand-new-wrap').hidden = true;
       await loadPartsFacets();
       partsPage = 1;
       loadPartsRows();
@@ -1105,7 +1155,7 @@
   let saleServices = [];
   let saleLines = [];
 
-  function newLine() { return { product_id: '', service_id: '', name: '', price_cents: 0, quantity: 1 }; }
+  function newLine() { return { product_id: '', service_id: '', part_id: '', name: '', price_cents: 0, quantity: 1 }; }
 
   async function loadSaleProducts() {
     try {
@@ -1140,7 +1190,7 @@
             ${saleServices.filter((s) => s.active).map((s) => `<option value="s-${s.id}" ${selectValue(line) === `s-${s.id}` ? 'selected' : ''}>${escapeHtml(s.name)} — ${money(s.price_cents)}</option>`).join('')}
           </optgroup>
         </select>
-        <input type="text" class="sale-line-name" placeholder="Item name" value="${escapeHtml(line.name)}" ${line.product_id || line.service_id ? 'readonly' : ''}>
+        <input type="text" class="sale-line-name" placeholder="Item name" value="${escapeHtml(line.name)}" ${line.product_id || line.service_id || line.part_id ? 'readonly' : ''}>
         <input type="number" class="sale-line-qty" min="1" step="1" value="${line.quantity}">
         <input type="number" class="sale-line-price" min="0" step="0.01" value="${(line.price_cents / 100).toFixed(2)}">
         <button type="button" class="sale-line-remove" aria-label="Remove line">✕</button>
@@ -1153,12 +1203,12 @@
         const val = e.target.value;
         if (val.startsWith('p-')) {
           const p = saleProducts.find((x) => String(x.id) === val.slice(2));
-          saleLines[idx] = { ...saleLines[idx], product_id: p.id, service_id: '', name: p.name, price_cents: p.price_cents };
+          saleLines[idx] = { ...saleLines[idx], product_id: p.id, service_id: '', part_id: '', name: p.name, price_cents: p.price_cents };
         } else if (val.startsWith('s-')) {
           const s = saleServices.find((x) => String(x.id) === val.slice(2));
-          saleLines[idx] = { ...saleLines[idx], product_id: '', service_id: s.id, name: s.name, price_cents: s.price_cents };
+          saleLines[idx] = { ...saleLines[idx], product_id: '', service_id: s.id, part_id: '', name: s.name, price_cents: s.price_cents };
         } else {
-          saleLines[idx] = { ...saleLines[idx], product_id: '', service_id: '', name: '' };
+          saleLines[idx] = { ...saleLines[idx], product_id: '', service_id: '', part_id: '', name: '' };
         }
         renderSaleLines();
         updateSaleTotal();
@@ -1211,14 +1261,80 @@
     if (existing) {
       existing.quantity += 1;
     } else {
-      const blank = saleLines.find((l) => !l.product_id && !l.service_id && !l.name.trim());
-      const line = { product_id: product.id, service_id: '', name: product.name, price_cents: product.price_cents, quantity: 1 };
+      const blank = saleLines.find((l) => !l.product_id && !l.service_id && !l.part_id && !l.name.trim());
+      const line = { product_id: product.id, service_id: '', part_id: '', name: product.name, price_cents: product.price_cents, quantity: 1 };
       if (blank) Object.assign(blank, line);
       else saleLines.push(line);
     }
     renderSaleLines();
     updateSaleTotal();
     input.focus();
+  });
+
+  /* ---- Find-a-part lookup (parts catalog) ---- */
+  let salePartSearchDebounce = null;
+  const salePartSearchInput = document.getElementById('sale-part-search');
+  const salePartResults = document.getElementById('sale-part-results');
+  const salePartHint = document.getElementById('sale-part-hint');
+
+  function addPartToSale(part) {
+    const name = `${part.brand} ${part.model} — ${part.part_name}`;
+    const existing = saleLines.find((l) => String(l.part_id) === String(part.id));
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      const blank = saleLines.find((l) => !l.product_id && !l.service_id && !l.part_id && !l.name.trim());
+      const line = { product_id: '', service_id: '', part_id: part.id, name, price_cents: part.price_cents || 0, quantity: 1 };
+      if (blank) Object.assign(blank, line);
+      else saleLines.push(line);
+    }
+    renderSaleLines();
+    updateSaleTotal();
+    salePartSearchInput.value = '';
+    salePartResults.hidden = true;
+    salePartHint.hidden = true;
+  }
+
+  async function runSalePartSearch(q) {
+    if (q.length < 2) { salePartResults.hidden = true; salePartHint.hidden = true; return; }
+    try {
+      const data = await api(`/api/admin/parts-catalog?q=${encodeURIComponent(q)}&limit=8`);
+      if (data.hints && data.hints.length) {
+        const uniqueMatches = [...new Set(data.hints.map((h) => h.matched))];
+        salePartHint.textContent = `Also matching: ${uniqueMatches.join(', ')}`;
+        salePartHint.hidden = false;
+      } else {
+        salePartHint.hidden = true;
+      }
+      if (!data.items.length) {
+        salePartResults.innerHTML = `<div class="sale-part-result">No parts match.</div>`;
+      } else {
+        salePartResults.innerHTML = data.items.map((p) => `
+          <div class="sale-part-result" data-id="${p.id}">
+            <div>
+              <div class="sale-part-result-name">${escapeHtml(p.brand)} ${escapeHtml(p.model)} — ${escapeHtml(p.part_name)}</div>
+              <div class="sale-part-result-meta">${escapeHtml(p.item_number)} · ${escapeHtml(p.category)} · ${p.price_cents != null ? money(p.price_cents) : 'no price set'} · ${p.stock > 0 ? 'In stock' : 'Out of stock'}</div>
+            </div>
+          </div>
+        `).join('');
+        salePartResults.querySelectorAll('.sale-part-result[data-id]').forEach((row) => {
+          const part = data.items.find((p) => String(p.id) === row.dataset.id);
+          row.addEventListener('click', () => addPartToSale(part));
+        });
+      }
+      salePartResults.hidden = false;
+    } catch (_) {
+      salePartResults.hidden = true;
+    }
+  }
+
+  salePartSearchInput.addEventListener('input', () => {
+    clearTimeout(salePartSearchDebounce);
+    const q = salePartSearchInput.value.trim();
+    salePartSearchDebounce = setTimeout(() => runSalePartSearch(q), 300);
+  });
+  document.addEventListener('click', (e) => {
+    if (!salePartSearchInput.contains(e.target) && !salePartResults.contains(e.target)) salePartResults.hidden = true;
   });
 
   document.getElementById('sale-form').addEventListener('submit', async (e) => {
@@ -1229,7 +1345,7 @@
 
     const items = saleLines
       .filter((l) => l.name.trim() && l.price_cents >= 0 && l.quantity > 0)
-      .map((l) => ({ product_id: l.product_id || null, service_id: l.service_id || null, name: l.name.trim(), price_cents: l.price_cents, quantity: l.quantity }));
+      .map((l) => ({ product_id: l.product_id || null, service_id: l.service_id || null, part_id: l.part_id || null, name: l.name.trim(), price_cents: l.price_cents, quantity: l.quantity }));
 
     if (!items.length) {
       toast.textContent = 'Add at least one line item.';
