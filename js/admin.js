@@ -792,10 +792,12 @@
   let allProducts = [];
   let selectedCategory = null;
   let inventoryData = { categories: [], services: { count: 0, sales7d: [] } };
+  let partsCatalogSummary = null;
 
   async function loadInventory() {
     try {
       inventoryData = await api('/api/admin/inventory');
+      try { partsCatalogSummary = await api('/api/admin/parts-catalog/facets'); } catch (_) { partsCatalogSummary = null; }
       renderInventoryCards();
       renderInventoryDonut();
     } catch (err) {
@@ -824,11 +826,23 @@
       sparkline: inventoryData.services.sales7d,
       gradient: GRADIENT_KEYS[inventoryData.categories.length % GRADIENT_KEYS.length],
     }));
+    if (partsCatalogSummary) {
+      const outOfStock = partsCatalogSummary.total - partsCatalogSummary.inStock;
+      cards.push(renderBannerCard({
+        key: '__parts_catalog__',
+        label: 'Parts catalog (iPhone/Samsung)',
+        num: partsCatalogSummary.total,
+        numUnit: partsCatalogSummary.total === 1 ? 'part listed' : 'parts listed',
+        sub: `${partsCatalogSummary.inStock} in stock · ${outOfStock} out of stock · click to manage`,
+        gradient: GRADIENT_KEYS[(inventoryData.categories.length + 1) % GRADIENT_KEYS.length],
+      }));
+    }
     container.innerHTML = cards.join('');
     container.querySelectorAll('.banner-card').forEach((btn) => {
       btn.addEventListener('click', () => {
         const key = btn.dataset.key;
         if (key === '__services__') { activateTab('services'); return; }
+        if (key === '__parts_catalog__') { activateTab('parts'); return; }
         selectCategory(key);
       });
     });

@@ -1072,10 +1072,15 @@ app.get('/api/admin/parts-catalog/facets', requireAdmin, requireDb, async (req, 
   const { rows: brandRows } = await pool.query('SELECT DISTINCT brand FROM parts_catalog ORDER BY brand');
   const { rows: categoryRows } = await pool.query('SELECT DISTINCT category FROM parts_catalog ORDER BY category');
   const { rows: modelRows } = await pool.query('SELECT DISTINCT brand, model FROM parts_catalog ORDER BY brand, model');
+  const { rows: countRows } = await pool.query(
+    `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE stock > 0)::int AS in_stock FROM parts_catalog`
+  );
   res.json({
     brands: brandRows.map((r) => r.brand),
     categories: categoryRows.map((r) => r.category),
     models: modelRows,
+    total: countRows[0].total,
+    inStock: countRows[0].in_stock,
   });
 });
 
