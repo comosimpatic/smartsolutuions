@@ -97,6 +97,7 @@
     settings: { btn: 'tab-settings', panel: 'settings-panel' },
     promo: { btn: 'tab-promo', panel: 'promo-panel' },
     content: { btn: 'tab-content', panel: 'content-panel' },
+    parts: { btn: 'tab-parts', panel: 'parts-panel' },
   };
 
   function activateTab(name) {
@@ -121,6 +122,7 @@
     }
     if (name === 'promo') { loadPromo(); }
     if (name === 'content') { loadSiteContent(); }
+    if (name === 'parts') { loadPartsFacets(); loadPartsRows(); }
     if (name === 'services') { loadServices(); }
     if (name === 'sale') { loadSaleProducts(); document.getElementById('sale-scan-input').focus(); }
     if (name === 'inquiries') { loadInquiries(); }
@@ -134,6 +136,7 @@
   document.getElementById('tab-settings').addEventListener('click', () => activateTab('settings'));
   document.getElementById('tab-promo').addEventListener('click', () => activateTab('promo'));
   document.getElementById('tab-content').addEventListener('click', () => activateTab('content'));
+  document.getElementById('tab-parts').addEventListener('click', () => activateTab('parts'));
 
   function showDashboard(role) {
     loginView.hidden = true;
@@ -565,6 +568,157 @@
       })));
       toast.textContent = 'Saved.';
       toast.classList.add('ok');
+    } catch (err) {
+      toast.textContent = err.message;
+      toast.classList.add('err');
+    }
+  });
+
+  /* ============ Parts catalog (owner + staff) ============ */
+  let partsPage = 1;
+  const PARTS_LIMIT = 50;
+  let partsSearchDebounce = null;
+
+  function partsQueryParams() {
+    const params = new URLSearchParams();
+    params.set('page', partsPage);
+    params.set('limit', PARTS_LIMIT);
+    const q = document.getElementById('parts-search').value.trim();
+    const brand = document.getElementById('parts-filter-brand').value;
+    const model = document.getElementById('parts-filter-model').value;
+    const category = document.getElementById('parts-filter-category').value;
+    if (q) params.set('q', q);
+    if (brand) params.set('brand', brand);
+    if (model) params.set('model', model);
+    if (category) params.set('category', category);
+    return params;
+  }
+
+  async function loadPartsFacets() {
+    try {
+      const facets = await api('/api/admin/parts-catalog/facets');
+      const brandSelect = document.getElementById('parts-filter-brand');
+      const currentBrand = brandSelect.value;
+      brandSelect.innerHTML = '<option value="">All brands</option>' +
+        facets.brands.map((b) => `<option value="${b}">${b}</option>`).join('');
+      brandSelect.value = currentBrand;
+
+      const categorySelect = document.getElementById('parts-filter-category');
+      const currentCategory = categorySelect.value;
+      categorySelect.innerHTML = '<option value="">All part types</option>' +
+        facets.categories.map((c) => `<option value="${c}">${c}</option>`).join('');
+      categorySelect.value = currentCategory;
+
+      window._partsModels = facets.models;
+      renderModelOptions();
+    } catch (err) {
+      /* facets are non-critical — leave filters as-is */
+    }
+  }
+
+  function renderModelOptions() {
+    const brand = document.getElementById('parts-filter-brand').value;
+    const modelSelect = document.getElementById('parts-filter-model');
+    const current = modelSelect.value;
+    const models = (window._partsModels || []).filter((m) => !brand || m.brand === brand);
+    modelSelect.innerHTML = '<option value="">All models</option>' +
+      models.map((m) => `<option value="${m.model}">${m.model}</option>`).join('');
+    if (models.some((m) => m.model === current)) modelSelect.value = current;
+  }
+
+  function centsToInputValue(cents) {
+    return Number.isFinite(cents) && cents !== null ? (cents / 100).toFixed(2) : '';
+  }
+
+  function renderPartsRow(item) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.item_number}</td>
+      <td>${item.brand}</td>
+      <td>${item.model}</td>
+      <td>${item.category}</td>
+      <td>${item.part_name}</td>
+      <td><input type="number" min="0" step="0.01" class="parts-price-input" value="${centsToInputValue(item.price_cents)}" style="width:90px;"></td>
+      <td><input type="number" min="0" step="1" class="parts-stock-input" value="${item.stock}" style="width:70px;"></td>
+      <td><span class="order-status ${item.stock > 0 ? 'order-status-fulfilled' : ''}">${item.stock > 0 ? 'In stock' : 'Out of stock'}</span></td>
+      <td><button type="button" class="btn btn-ghost parts-save-btn">Save</button></td>
+    `;
+    tr.querySelector('.parts-save-btn').addEventListener('click', async () => {
+      const priceInput = tr.querySelector('.parts-price-input');
+      const stockInput = tr.querySelector('.parts-stock-input');
+      const priceValue = priceInput.value.trim();
+      try {
+        const updated = await api(`/api/admin/parts-catalog/${item.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            price_cents: priceValue === '' ? '' : Math.round(parseFloat(priceValue) * 100),
+            stock: stockInput.value,
+          }),
+        });
+        const newRow = renderPartsRow(updated);
+        tr.replaceWith(newRow);
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+    return tr;
+  }
+
+  async function loadPartsRows() {
+    const tbody = document.getElementById('parts-rows');
+    tbody.innerHTML = `<tr><td colspan="9">Loading…</td></tr>`;
+    try {
+      const data = await api(`/api/admin/parts-catalog?${partsQueryParams().toString()}`);
+      tbody.innerHTML = '';
+      if (!data.items.length) {
+        tbody.innerHTML = `<tr><td colspan="9">No parts match.</td></tr>`;
+      } else {
+        data.items.forEach((item) => tbody.appendChild(renderPartsRow(item)));
+      }
+      const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
+      const end = Math.min(data.page * data.limit, data.total);
+      document.getElementById('parts-page-info').textContent = `Showing ${start}-${end} of ${data.total}`;
+      document.getElementById('parts-prev').disabled = data.page <= 1;
+      document.getElementById('parts-next').disabled = end >= data.total;
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="9" class="admin-error">${err.message}</td></tr>`;
+    }
+  }
+
+  document.getElementById('parts-search').addEventListener('input', () => {
+    clearTimeout(partsSearchDebounce);
+    partsSearchDebounce = setTimeout(() => { partsPage = 1; loadPartsRows(); }, 350);
+  });
+  document.getElementById('parts-filter-brand').addEventListener('change', () => {
+    renderModelOptions();
+    document.getElementById('parts-filter-model').value = '';
+    partsPage = 1;
+    loadPartsRows();
+  });
+  document.getElementById('parts-filter-model').addEventListener('change', () => { partsPage = 1; loadPartsRows(); });
+  document.getElementById('parts-filter-category').addEventListener('change', () => { partsPage = 1; loadPartsRows(); });
+  document.getElementById('parts-prev').addEventListener('click', () => { if (partsPage > 1) { partsPage--; loadPartsRows(); } });
+  document.getElementById('parts-next').addEventListener('click', () => { partsPage++; loadPartsRows(); });
+
+  document.getElementById('parts-import-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const toast = document.getElementById('parts-import-toast');
+    toast.textContent = 'Importing… this can take a moment for large files.';
+    toast.className = 'admin-toast';
+    const fd = new FormData();
+    fd.append('brand', document.getElementById('parts-import-brand').value);
+    fd.append('file', document.getElementById('parts-import-file').files[0]);
+    try {
+      const res = await fetch('/api/admin/parts-catalog/import', { method: 'POST', body: fd });
+      let data = null;
+      try { data = await res.json(); } catch (_) { /* no body */ }
+      if (!res.ok) throw new Error((data && data.error) || `Request failed (${res.status})`);
+      toast.textContent = `Imported: ${data.inserted} new, ${data.updated} updated, ${data.skipped} skipped (of ${data.total} rows).`;
+      toast.classList.add('ok');
+      document.getElementById('parts-import-form').reset();
+      await loadPartsFacets();
+      partsPage = 1;
+      loadPartsRows();
     } catch (err) {
       toast.textContent = err.message;
       toast.classList.add('err');

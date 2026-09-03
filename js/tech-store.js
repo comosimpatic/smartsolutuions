@@ -292,6 +292,56 @@
     }
   }
 
+  /* ---------- Parts catalog finder (iPhone/Samsung teardown search) ---------- */
+  const partsSearchInput = document.getElementById('tp-parts-search');
+  if (partsSearchInput) {
+    const resultsEl = document.getElementById('tp-parts-results');
+    let partsSearchDebounce = null;
+
+    function formatPriceCents(cents) {
+      return Number.isFinite(cents) ? `EC$${(cents / 100).toFixed(2)}` : 'Price on request';
+    }
+
+    async function runPartsSearch(q) {
+      if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+      resultsEl.innerHTML = `<p class="tp-parts-results-empty">Searching…</p>`;
+      try {
+        const res = await fetch(`/api/parts-search?q=${encodeURIComponent(q)}`);
+        const items = await res.json();
+        if (!items.length) {
+          resultsEl.innerHTML = `<p class="tp-parts-results-empty">No matching parts. Try a different model or component name, or <button type="button" class="tp-inline-link" id="tp-parts-ask-anyway">ask us directly</button>.</p>`;
+          const askBtn = document.getElementById('tp-parts-ask-anyway');
+          if (askBtn) askBtn.addEventListener('click', () => openInquiry(q));
+          return;
+        }
+        resultsEl.innerHTML = items.map((item) => {
+          const name = `${item.brand} ${item.model} — ${item.part_name}`;
+          return `
+            <div class="tp-parts-result">
+              <div class="tp-parts-result-media"><img src="${escapeHtml(item.image_src)}" alt="" loading="lazy"></div>
+              <div class="tp-parts-result-info">
+                <p class="tp-parts-result-name">${escapeHtml(name)}</p>
+                <p class="tp-parts-result-meta">Item #${escapeHtml(item.item_number)} · ${escapeHtml(item.category)} · ${escapeHtml(formatPriceCents(item.price_cents))}</p>
+              </div>
+              <span class="tp-parts-result-status${item.in_stock ? '' : ' out-of-stock'}">${item.in_stock ? 'In stock' : 'Out of stock'}</span>
+              <button type="button" class="btn btn-ghost tp-parts-ask-btn" data-name="${escapeHtml(name)}">Ask about this</button>
+            </div>`;
+        }).join('');
+        resultsEl.querySelectorAll('.tp-parts-ask-btn').forEach((btn) => {
+          btn.addEventListener('click', () => openInquiry(btn.dataset.name));
+        });
+      } catch (_) {
+        resultsEl.innerHTML = `<p class="tp-parts-results-empty">Search is unavailable right now — please try again shortly.</p>`;
+      }
+    }
+
+    partsSearchInput.addEventListener('input', () => {
+      clearTimeout(partsSearchDebounce);
+      const q = partsSearchInput.value.trim();
+      partsSearchDebounce = setTimeout(() => runPartsSearch(q), 350);
+    });
+  }
+
   loadProducts();
   loadPromo();
 })();

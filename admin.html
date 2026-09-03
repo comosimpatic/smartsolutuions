@@ -72,6 +72,7 @@
         <button type="button" class="admin-tab" id="tab-products">Inventory</button>
         <button type="button" class="admin-tab" id="tab-promo">Promo banner</button>
         <button type="button" class="admin-tab" id="tab-content" data-owner-only>Site content</button>
+        <button type="button" class="admin-tab" id="tab-parts">Parts catalog</button>
       </div>
 
       <h1 id="dashboard-title">Tech Store</h1>
@@ -510,6 +511,82 @@
               <p class="admin-toast" id="content-toast"></p>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- ============ Parts catalog (owner + staff) ============ -->
+      <div id="parts-panel" hidden>
+        <div class="admin-section-head" data-owner-only>
+          <h2>Import parts list</h2>
+        </div>
+        <div class="admin-form-card" data-owner-only>
+          <form id="parts-import-form">
+            <div class="admin-form-grid">
+              <div class="admin-field">
+                <label for="parts-import-brand">Brand</label>
+                <select id="parts-import-brand" required>
+                  <option value="">Select brand…</option>
+                  <option value="iPhone">iPhone</option>
+                  <option value="Samsung">Samsung</option>
+                </select>
+              </div>
+              <div class="admin-field">
+                <label for="parts-import-file">Parts list file (.xlsx or .csv)</label>
+                <input type="file" id="parts-import-file" accept=".xlsx,.xls,.csv" required>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <button type="submit" class="btn btn-primary">Import</button>
+              <p class="admin-toast" id="parts-import-toast"></p>
+            </div>
+          </form>
+        </div>
+
+        <div class="admin-section-head">
+          <h2>Parts catalog</h2>
+          <input type="search" class="admin-search" id="parts-search" placeholder="Search model, part, or item #…">
+        </div>
+        <div class="admin-form-card" style="margin-bottom:16px;">
+          <div class="admin-form-grid">
+            <div class="admin-field">
+              <label for="parts-filter-brand">Brand</label>
+              <select id="parts-filter-brand"><option value="">All brands</option></select>
+            </div>
+            <div class="admin-field">
+              <label for="parts-filter-model">Model</label>
+              <select id="parts-filter-model"><option value="">All models</option></select>
+            </div>
+            <div class="admin-field">
+              <label for="parts-filter-category">Part type</label>
+              <select id="parts-filter-category"><option value="">All part types</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Item #</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Part type</th>
+                <th>Part</th>
+                <th>Price (EC$)</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="parts-rows"></tbody>
+          </table>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:14px;">
+          <p class="admin-section-note" id="parts-page-info"></p>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-ghost" id="parts-prev">Previous</button>
+            <button type="button" class="btn btn-ghost" id="parts-next">Next</button>
+          </div>
         </div>
       </div>
 

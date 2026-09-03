@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const multer = require('multer');
 const sharp = require('sharp');
 const sanitizeHtml = require('sanitize-html');
+const XLSX = require('xlsx');
 const { Pool } = require('pg');
 const zoho = require('./zoho');
 
@@ -43,6 +44,25 @@ const CATEGORY_IMAGE = {
   laptops: '/assets/products/laptop.jpg',
   parts: '/assets/products/parts.jpg',
 };
+
+// Teardown parts catalog (iPhone/Samsung, per-model per-part) — one placeholder
+// photo per part category, shared across every model until real photos exist.
+// Display/Enclosure/Power/Camera reuse the existing generic repair-bench photo
+// (already live as the storefront "parts" category image); Core and the small
+// flex-cable-type categories get their own distinct close-up.
+const PART_CATEGORY_IMAGE = {
+  Display: '/assets/products/parts.jpg',
+  Enclosure: '/assets/products/parts.jpg',
+  Power: '/assets/products/parts.jpg',
+  Camera: '/assets/products/parts.jpg',
+  Core: '/assets/parts/core.jpg',
+  'Haptics/Audio': '/assets/parts/flex.jpg',
+  Buttons: '/assets/parts/flex.jpg',
+  Charging: '/assets/parts/flex.jpg',
+  RF: '/assets/parts/flex.jpg',
+  Sensors: '/assets/parts/flex.jpg',
+};
+const PART_CATEGORY_FALLBACK_IMAGE = '/assets/products/parts.jpg';
 
 const PRODUCT_COLUMNS = `
   id, category, name, specs, price_cents, condition, icon, image_url, stock, barcode,
@@ -193,6 +213,24 @@ async function initDb() {
     }
     console.log(`Seeded ${SEED_SERVICES.length} services.`);
   }
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS parts_catalog (
+      id SERIAL PRIMARY KEY,
+      brand TEXT NOT NULL,
+      model TEXT NOT NULL,
+      category TEXT NOT NULL,
+      part_name TEXT NOT NULL,
+      notes TEXT NOT NULL DEFAULT '',
+      price_cents INTEGER,
+      stock INTEGER NOT NULL DEFAULT 0,
+      image_url TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (brand, model, category, part_name)
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS parts_catalog_search_idx ON parts_catalog (brand, model, category)`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS orders (
@@ -444,6 +482,30 @@ app.get('/api/site-content', requireDb, async (req, res) => {
   const map = {};
   for (const row of rows) map[row.content_key] = row.html;
   res.json(map);
+});
+
+app.get('/api/parts-search', requireDb, async (req, res) => {
+  const q = String(req.query.q || '').trim();
+  if (q.length < 2) return res.json([]);
+  const { rows } = await pool.query(
+    `SELECT brand, model, category, part_name, price_cents, stock, image_url,
+            'PT-' || LPAD(id::text, 6, '0') AS item_number
+     FROM parts_catalog
+     WHERE (brand || ' ' || model || ' ' || part_name || ' ' || category) ILIKE $1
+     ORDER BY brand, model, category, part_name
+     LIMIT 30`,
+    [`%${q}%`]
+  );
+  res.json(rows.map((r) => ({
+    item_number: r.item_number,
+    brand: r.brand,
+    model: r.model,
+    category: r.category,
+    part_name: r.part_name,
+    price_cents: r.price_cents,
+    in_stock: r.stock > 0,
+    image_src: r.image_url || PART_CATEGORY_IMAGE[r.category] || PART_CATEGORY_FALLBACK_IMAGE,
+  })));
 });
 
 /* ---------- Checkout (Stripe) ---------- */
@@ -959,6 +1021,118 @@ app.put('/api/admin/promo', requireAdmin, requireDb, upload.single('image'), asy
   const row = rows[0];
   const version = row.updated_at ? new Date(row.updated_at).getTime() : 0;
   res.json({ ...row, image_src: row.has_image ? `/api/promo/image?v=${version}` : null });
+});
+
+/* ============ Parts catalog (iPhone/Samsung teardown reference — owner + staff) ============ */
+function withPartImageSrc(row) {
+  return { ...row, image_src: row.image_url || PART_CATEGORY_IMAGE[row.category] || PART_CATEGORY_FALLBACK_IMAGE };
+}
+
+app.get('/api/admin/parts-catalog/facets', requireAdmin, requireDb, async (req, res) => {
+  const { rows: brandRows } = await pool.query('SELECT DISTINCT brand FROM parts_catalog ORDER BY brand');
+  const { rows: categoryRows } = await pool.query('SELECT DISTINCT category FROM parts_catalog ORDER BY category');
+  const { rows: modelRows } = await pool.query('SELECT DISTINCT brand, model FROM parts_catalog ORDER BY brand, model');
+  res.json({
+    brands: brandRows.map((r) => r.brand),
+    categories: categoryRows.map((r) => r.category),
+    models: modelRows,
+  });
+});
+
+app.get('/api/admin/parts-catalog', requireAdmin, requireDb, async (req, res) => {
+  const { q = '', brand = '', model = '', category = '' } = req.query;
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
+  const offset = (page - 1) * limit;
+
+  const conditions = [];
+  const params = [];
+  if (q) {
+    params.push(`%${q}%`);
+    conditions.push(`(brand || ' ' || model || ' ' || part_name || ' ' || category) ILIKE $${params.length}`);
+  }
+  if (brand) { params.push(brand); conditions.push(`brand = $${params.length}`); }
+  if (model) { params.push(model); conditions.push(`model = $${params.length}`); }
+  if (category) { params.push(category); conditions.push(`category = $${params.length}`); }
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const { rows: countRows } = await pool.query(`SELECT COUNT(*)::int AS count FROM parts_catalog ${where}`, params);
+  const { rows } = await pool.query(
+    `SELECT id, brand, model, category, part_name, notes, price_cents, stock, image_url,
+            'PT-' || LPAD(id::text, 6, '0') AS item_number
+     FROM parts_catalog ${where}
+     ORDER BY brand, model, category, part_name
+     LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+    [...params, limit, offset]
+  );
+  res.json({ total: countRows[0].count, page, limit, items: rows.map(withPartImageSrc) });
+});
+
+app.put('/api/admin/parts-catalog/:id', requireAdmin, requireDb, async (req, res) => {
+  const { id } = req.params;
+  const priceRaw = req.body?.price_cents;
+  const price_cents = priceRaw === '' || priceRaw == null ? null : Math.round(parseFloat(priceRaw));
+  const stock = Math.max(0, Math.round(parseFloat(req.body?.stock)) || 0);
+
+  const { rows } = await pool.query(
+    `UPDATE parts_catalog SET price_cents=$1, stock=$2, updated_at=now() WHERE id=$3
+     RETURNING id, brand, model, category, part_name, notes, price_cents, stock, image_url,
+               'PT-' || LPAD(id::text, 6, '0') AS item_number`,
+    [Number.isFinite(price_cents) ? price_cents : null, stock, id]
+  );
+  if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+  res.json(withPartImageSrc(rows[0]));
+});
+
+app.post('/api/admin/parts-catalog/import', requireOwner, requireDb, upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const brand = String(req.body?.brand || '').trim();
+  if (!brand) return res.status(400).json({ error: 'Brand is required' });
+
+  let workbook;
+  try {
+    workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+  } catch (err) {
+    return res.status(400).json({ error: 'Could not read that file — is it a valid .xlsx or .csv?' });
+  }
+  const sheetName = workbook.SheetNames.includes('Full Parts List') ? 'Full Parts List' : workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const sheetRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+  const parts = [];
+  let skipped = 0;
+  for (const row of sheetRows) {
+    const model = String(row.Model || '').trim();
+    const category = String(row.Category || '').trim();
+    const partName = String(row.Part || '').trim();
+    if (!model || !category || !partName) { skipped++; continue; }
+    parts.push([brand, model, category, partName, String(row.Notes || '').trim(), PART_CATEGORY_IMAGE[category] || null]);
+  }
+
+  const BATCH_SIZE = 200;
+  let inserted = 0;
+  let updated = 0;
+  for (let i = 0; i < parts.length; i += BATCH_SIZE) {
+    const batch = parts.slice(i, i + BATCH_SIZE);
+    const values = [];
+    const params = [];
+    batch.forEach((row, idx) => {
+      const base = idx * 6;
+      values.push(`($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6})`);
+      params.push(...row);
+    });
+    const { rows } = await pool.query(
+      `INSERT INTO parts_catalog (brand, model, category, part_name, notes, image_url)
+       VALUES ${values.join(',')}
+       ON CONFLICT (brand, model, category, part_name)
+       DO UPDATE SET notes = EXCLUDED.notes, updated_at = now()
+       RETURNING (xmax = 0) AS was_inserted`,
+      params
+    );
+    rows.forEach((r) => { if (r.was_inserted) inserted++; else updated++; });
+  }
+
+  res.json({ inserted, updated, skipped, total: sheetRows.length });
 });
 
 app.get('/api/admin/orders', requireOwner, requireDb, async (req, res) => {
