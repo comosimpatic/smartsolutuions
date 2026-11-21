@@ -1,0 +1,125 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Scroll-stacking work deck
+   A scroll-linked 3D deck: each card is a piece of work, its video edge to edge.
+   As you scroll, the next card rises from below, leaning toward you and out of
+   focus, then flattens and sharpens as it lands; the cards beneath sink and dim.
+   Ported to vanilla CSS/JS from the 21st.dev "Project Deck" by Aakash Mehra.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.work-intro { padding: 5rem 0 1.5rem; text-align: center; }
+
+.work-deck { position: relative; width: 100%; }
+
+.deck-stage {
+  position: sticky; top: 0;
+  height: 100vh; height: 100svh;
+  display: grid; place-items: center;
+  overflow: hidden;
+  padding: 0 1.25rem;
+  perspective: 1800px;
+}
+@media (min-width: 640px) { .deck-stage { padding: 0 2.5rem; } }
+
+.deck-card {
+  grid-area: 1 / 1;
+  /* size from the viewport height so the whole card (incl. the corner button)
+     stays on screen; 1120px is the hard cap on big displays */
+  width: min(92vw, calc(68svh * 16 / 9), 1120px);
+  margin-top: 0;
+  transform-origin: 50% 22%;
+  will-change: transform, filter;
+}
+@media (max-width: 640px) { .deck-card { width: 92vw; } }
+
+.deck-media {
+  position: relative; overflow: hidden;
+  border-radius: 24px;
+  box-shadow: 0 50px 90px -35px rgba(10, 12, 20, 0.5);
+  background: var(--surface, #fff);
+}
+.deck-media video,
+.deck-media img {
+  display: block; width: 100%;
+  aspect-ratio: 16 / 9; object-fit: cover; object-position: top;
+}
+@media (max-width: 640px) {
+  .deck-media video, .deck-media img { aspect-ratio: 4 / 5; }
+}
+
+.deck-chip {
+  position: absolute; top: 1rem; left: 1rem; z-index: 6;
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .32rem .72rem; border-radius: 999px;
+  font-size: .72rem; font-weight: 600; letter-spacing: .02em;
+  color: #fff; background: rgba(10, 14, 25, .42);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+
+.deck-dim { position: absolute; inset: 0; background: #0A0C14; opacity: 0; pointer-events: none; }
+
+/* The whole card is the link */
+.deck-card--link { display: block; cursor: pointer; text-decoration: none; color: inherit; }
+
+/* Visit cue, nested into a corner cut out of the card (bottom-right).
+   `--ground` is the colour the notch + button are filled with (the page). */
+.deck-visit { position: absolute; right: 0; bottom: 0; z-index: 10; }
+.deck-visit-inner {
+  display: inline-flex; align-items: center; gap: 1rem;
+  padding: .7rem .8rem .7rem 1.2rem;
+  border-top-left-radius: 20px;
+  background: var(--bg, #f7f8fb); color: var(--text, #10162b);
+}
+.deck-corner { position: absolute; display: block; }
+.deck-corner path { fill: var(--bg, #f7f8fb); }
+.deck-corner--top  { right: 0;    bottom: 100%; }
+.deck-corner--left { right: 100%; bottom: 0; }
+
+.deck-visit-text { display: flex; flex-direction: column; line-height: 1.2; }
+.deck-visit-text strong { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
+.deck-visit-text small { font-size: .8rem; color: var(--text-dim, #4b5468); }
+.deck-card--link:hover .deck-visit-text small { text-decoration: underline; text-underline-offset: 3px; }
+.deck-visit-arrow {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none;
+  border-radius: 999px; background: var(--accent, #1d4ed8); color: #fff;
+  font-size: 1.15rem; transition: transform .2s var(--ease, ease);
+}
+.deck-card--link:hover .deck-visit-arrow { transform: rotate(45deg); }
+@media (max-width: 640px) {
+  .deck-visit-inner { padding: .5rem .5rem .5rem .9rem; gap: .6rem; }
+  .deck-visit-arrow { width: 38px; height: 38px; }
+  .deck-visit-text strong { font-size: .9rem; }
+  .deck-visit-text small { font-size: .72rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-card { filter: none !important; }
+}
+
+/* ── Hero as the base card (card 0) ─────────────────────────────────────────
+   Keeps the `hero` class so the existing hero styles apply; we only override
+   the full-section layout so it sits inside a rounded card. */
+.deck-media.deck-media--hero {
+  padding: clamp(24px, 4svh, 56px) 1.25rem;
+  min-height: min(68svh, 600px);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-alt, #eef1f7);
+}
+@media (max-width: 640px) {
+  .deck-media.deck-media--hero { padding: 48px 1rem; min-height: min(78svh, 560px); }
+}
+/* the hero video fills the card (cancel the generic 16:9 media rule) */
+.deck-media--hero .hero-bg-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  aspect-ratio: auto; object-fit: cover;
+}
+.deck-media--hero .hero-inner { max-width: var(--max-w, 1180px); margin: 0 auto; }
+/* compact the hero so the buttons + stats stay in view inside the card */
+.deck-media--hero h1 {
+  font-size: clamp(1.9rem, 4.4vw, 3.4rem);
+  max-width: 20ch; margin-bottom: 20px;
+}
+.deck-media--hero .eyebrow { margin-bottom: 16px; }
+.deck-media--hero .hero-actions { margin-bottom: 30px; }
+.deck-media--hero .hero-stats { gap: clamp(20px, 3vw, 40px); }
+.deck-media--hero .hero-stats dt { font-size: clamp(1.4rem, 2.6vw, 1.9rem); }

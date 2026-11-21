@@ -1,0 +1,14 @@
+/* Colorful gradient shape icons for the service cards */
+.service-card .card-icon {
+  width: 56px;
+  height: 56px;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 18px;
+}
+.service-card .card-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 8px 14px rgba(16, 22, 43, 0.14));
+}

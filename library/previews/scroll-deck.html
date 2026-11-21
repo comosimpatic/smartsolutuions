@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8">
+<style>
+  html,body{margin:0;height:100%;background:#e7e8ea;display:grid;place-items:center;overflow:hidden;font-family:system-ui,sans-serif}
+  .stage{position:relative;width:76%;height:70%;perspective:1000px}
+  .card{position:absolute;inset:0;border-radius:16px;overflow:hidden;box-shadow:0 30px 50px -22px rgba(10,12,20,.5);transform-origin:50% 25%}
+  .card b{position:absolute;right:0;bottom:0;background:#fff;color:#111318;font-size:12px;font-weight:600;padding:8px 10px;border-top-left-radius:12px}
+  .c1{transform:translateY(16%) rotateX(22deg) scale(.9);filter:blur(2px);background:linear-gradient(135deg,#0ea5e9,#22d3ee)}
+  .c2{transform:translateY(7%) rotateX(11deg) scale(.95);background:linear-gradient(135deg,#8b5cf6,#f472b6)}
+  .c3{transform:none;background:linear-gradient(135deg,#fb923c,#f43f5e)}
+</style></head><body>
+  <div class="stage">
+    <div class="card c1"><b>Site C ↗</b></div>
+    <div class="card c2"><b>Site B ↗</b></div>
+    <div class="card c3"><b>Site A ↗</b></div>
+  </div>
+</body></html>

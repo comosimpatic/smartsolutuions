@@ -1,0 +1,62 @@
+/* Service critters — DOM physics bodies that look 3D + fuzzy, each a service. */
+#scritter-stage {
+  position: relative;
+  width: 100%;
+  height: clamp(300px, 40vh, 400px);
+  margin: 6px 0 10px;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.scritter {
+  position: absolute; left: 0; top: 0;
+  width: 112px; height: 112px;
+  margin-left: -56px; margin-top: -56px;   /* transform positions the centre */
+  display: grid; place-items: center;
+  cursor: grab; text-decoration: none;
+  -webkit-user-select: none; user-select: none;
+  opacity: 0; will-change: transform;
+}
+#scritter-stage.grabbing, #scritter-stage.grabbing .scritter { cursor: grabbing; }
+
+/* the colourful, fuzzy body */
+.scritter-blob {
+  position: absolute; inset: 4px;
+  border-radius: 46% 54% 52% 48% / 54% 46% 55% 45%;
+  filter: url(#scritter-fuzz);
+  box-shadow: inset -6px -8px 16px rgba(0,0,0,.18), inset 7px 6px 14px rgba(255,255,255,.35);
+}
+.scritter-blob::after {           /* glossy 3D highlight */
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: radial-gradient(55% 50% at 36% 30%, rgba(255,255,255,.6), rgba(255,255,255,0) 62%);
+}
+.scritter-shadow {
+  position: absolute; left: 50%; bottom: 2px; width: 66%; height: 13px;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(16,22,43,.3), transparent 72%);
+  filter: blur(2px);
+}
+
+/* face + label sit above the fuzzy body, kept sharp */
+.scritter-eyes {
+  position: absolute; top: 33%; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 12px; z-index: 3;
+}
+.scritter-eyes i {
+  width: 11px; height: 14px; background: #fff; border-radius: 50%;
+  position: relative; box-shadow: 0 1px 2px rgba(0,0,0,.18);
+}
+.scritter-eyes i::after {
+  content: ""; position: absolute; width: 5px; height: 5px; background: #16213a;
+  border-radius: 50%; left: 3px; top: 6px;
+}
+.scritter-label {
+  position: absolute; bottom: 19%; left: 50%; transform: translateX(-50%);
+  z-index: 3; width: 94%; text-align: center; line-height: 1.08;
+  color: #fff; font-weight: 700; font-size: 11px; letter-spacing: -.01em;
+  text-shadow: 0 1px 3px rgba(0,0,0,.4); pointer-events: none;
+}
+.scritter:hover .scritter-blob { filter: url(#scritter-fuzz) brightness(1.04); }
+
+@media (prefers-reduced-motion: reduce) {
+  .scritter-blob { filter: none; }
+}

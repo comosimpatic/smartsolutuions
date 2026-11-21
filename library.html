@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Component Library — Smart Solutions</title>
+<meta name="description" content="A library of copy-paste UI components and styles — live previews, code and integration prompts. A Smart Solutions service.">
+<link rel="icon" type="image/png" href="assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/library.css">
+</head>
+<body>
+
+<header class="lib-head">
+  <div class="lib-wrap">
+    <a class="lib-logo" href="index.html">
+      <img src="assets/logo-mark.png" alt="">
+      <span>Smart <em>Solutions</em></span>
+    </a>
+    <a class="lib-back" href="index.html">← Back to site</a>
+  </div>
+</header>
+
+<main>
+  <section class="lib-wrap lib-hero">
+    <p class="lib-eyebrow">A Smart Solutions service</p>
+    <h1>Component Library</h1>
+    <p>Copy-paste UI components and styles — each with a live preview, the code, and an
+       integration prompt you can hand to any AI coding agent. Built for your stack.</p>
+
+    <div class="lib-controls">
+      <div class="lib-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="lib-search-input" type="search" placeholder="Search components…" autocomplete="off">
+      </div>
+    </div>
+    <div class="lib-filters" id="lib-filters"></div>
+  </section>
+
+  <section class="lib-wrap">
+    <div class="lib-grid" id="lib-grid"></div>
+  </section>
+</main>
+
+<div class="lib-modal" id="lib-modal" hidden>
+  <div class="lib-dialog" id="lib-dialog" role="dialog" aria-modal="true"></div>
+</div>
+
+<footer class="lib-foot">
+  <div class="lib-wrap">
+    Component Library · a <a href="index.html" style="color:var(--lib-accent)">Smart Solutions</a> service.
+    Third-party components are credited to their authors under their own licenses.
+  </div>
+</footer>
+
+<script src="js/library-data.js"></script>
+<script src="js/library.js"></script>
+</body>
+</html>

@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/work-deck.css">
+<link rel="stylesheet" href="css/critter-band.css">
 </head>
 <body>
 
@@ -27,6 +29,7 @@
       <a href="#process">Process</a>
       <a href="#work">Work</a>
       <a href="#about">About</a>
+      <a href="library.html">Library</a>
       <a href="#contact" class="nav-cta">Start a Project</a>
     </nav>
     <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
@@ -37,9 +40,13 @@
 
 <main id="top">
 
-  <!-- HERO -->
-  <section class="hero">
-    <video class="hero-bg-video" autoplay muted loop playsinline aria-hidden="true">
+  <!-- FEATURED WORK (scroll-stacking deck) -->
+  <section class="work-deck" id="work" aria-label="Selected work">
+    <div class="deck-stage">
+
+      <article class="deck-card deck-card--hero" style="z-index:0">
+        <div class="deck-media deck-media--hero hero">
+<video class="hero-bg-video" autoplay muted loop playsinline aria-hidden="true">
       <source src="media/hero-bg.mp4" type="video/mp4">
     </video>
     <div class="hero-video-scrim"></div>
@@ -52,11 +59,6 @@
         Building the <span class="text-gradient">intelligent systems</span><br>
         that run tomorrow's business.
       </h1>
-      <p class="hero-lead reveal" data-content-key="hero_lead">
-        Smart Solutions is a technology consultancy specializing in AI, cloud
-        architecture and custom software — turning ambitious ideas into
-        production-grade systems.
-      </p>
       <div class="hero-actions reveal">
         <a href="#contact" class="btn btn-primary">Start a Project <span aria-hidden="true">→</span></a>
         <a href="#services" class="btn btn-ghost">Explore Services</a>
@@ -68,152 +70,85 @@
         <div><dt data-count="14">0</dt><dd>Countries Served</dd></div>
       </dl>
     </div>
-  </section>
+        </div>
+      </article>
 
-  <!-- FEATURED WORK -->
-  <section class="work" id="work">
-    <div class="container">
-      <p class="section-label reveal">Selected work</p>
-      <h2 class="section-title reveal">Systems in production</h2>
+      <a class="deck-card deck-card--link" style="z-index:1" href="work/ai-platform.html">
+        <div class="deck-media">
+          <video src="media/work-ai-platform.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          <span class="deck-chip">AI Platform</span>
+          <div class="deck-dim"></div>
+          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Predictive Ops Engine</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
+        </div>
+      </a>
 
-      <div class="work-filters reveal" role="tablist">
-        <button class="work-filter active" data-filter="all">All</button>
-        <button class="work-filter" data-filter="ai">AI Platform</button>
-        <button class="work-filter" data-filter="tech">Tech Store</button>
-        <button class="work-filter" data-filter="wedding">Wedding Packages</button>
-        <button class="work-filter" data-filter="security">Security</button>
-        <button class="work-filter" data-filter="dashboards">Live Dashboards</button>
-        <button class="work-filter" data-filter="app">App Building</button>
-        <button class="work-filter" data-filter="logistics">Logistics</button>
-        <button class="work-filter" data-filter="accounting">Accounting</button>
-      </div>
+      <a class="deck-card deck-card--link" style="z-index:2" href="work/tech-store.html">
+        <div class="deck-media">
+          <video src="media/work-tech.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          <span class="deck-chip">Tech Store</span>
+          <div class="deck-dim"></div>
+          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Tech Marketplace</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
+        </div>
+      </a>
 
-      <div class="work-grid">
-        <a class="work-card work-grad-1 reveal" data-category="ai" href="work/ai-platform.html">
-          <video class="work-card-video" src="media/work-ai-platform.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
-          <div class="work-scrim"></div>
-          <div class="work-card-top">
-            <span class="work-chip"><span class="work-chip-dot"></span>AI Platform</span>
-            <span class="work-tags">Forecasting · MLOps</span>
-          </div>
-          <div class="work-card-bottom">
-            <div>
-              <h3>Predictive Ops Engine</h3>
-              <p>A forecasting engine for a logistics network, cutting delivery delays by 31%.</p>
-            </div>
-            <span class="work-arrow" aria-hidden="true">→</span>
-          </div>
-        </a>
-        <a class="work-card work-grad-5 reveal" data-category="tech" href="work/tech-store.html">
-          <video class="work-card-video" src="media/work-tech.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
-          <div class="work-scrim"></div>
-          <div class="work-card-top">
-            <span class="work-chip"><span class="work-chip-dot"></span>Tech Store</span>
-            <span class="work-tags">Phones · Laptops · Parts</span>
-          </div>
-          <div class="work-card-bottom">
-            <div>
-              <h3>SmartSolutions Tech Marketplace</h3>
-              <p>Certified new and refurbished devices, parts and accessories — sourced, tested and ready to ship.</p>
-            </div>
-            <span class="work-arrow" aria-hidden="true">→</span>
-          </div>
-        </a>
-        <a class="work-card work-grad-6 reveal" data-category="wedding" href="https://weddings.smartsolutionssvg.com/">
-          <video class="work-card-video" src="media/work-wedding.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
-          <div class="work-scrim"></div>
-          <div class="work-card-top">
-            <span class="work-chip"><span class="work-chip-dot"></span>Wedding Packages</span>
-            <span class="work-tags">Vendors · Booking</span>
-          </div>
-          <div class="work-card-bottom">
-            <div>
-              <h3>Wedding Package Builder</h3>
-              <p>A package-and-vendor booking platform — clients build their day, vendors get a free profile in exchange for a guaranteed booking.</p>
-            </div>
-            <span class="work-arrow" aria-hidden="true">→</span>
-          </div>
-        </a>
-        <a class="work-card work-grad-2 reveal" data-category="security" href="work/security.html">
-          <video class="work-card-video" src="media/work-security.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
-          <div class="work-scrim"></div>
-          <div class="work-card-top">
-            <span class="work-chip"><span class="work-chip-dot"></span>Security</span>
-            <span class="work-tags">Threat Detection · Zero Trust</span>
-          </div>
-          <div class="work-card-bottom">
-            <div>
-              <h3>Adaptive Security Framework</h3>
-              <p>A zero-trust monitoring layer flagging anomalous access in real time, cutting incident response time by 42%.</p>
-            </div>
-            <span class="work-arrow" aria-hidden="true">→</span>
-          </div>
-        </a>
-        <a class="work-card work-grad-3 reveal" data-category="dashboards" href="work/live-dashboards.html">
-          <video class="work-card-video" src="media/work-aviation.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
-          <div class="work-scrim"></div>
-          <div class="work-card-top">
-            <span class="work-chip"><span class="work-chip-dot"></span>Live Dashboards</span>
-            <span class="work-tags">Analytics · Real-time</span>
-          </div>
-          <div class="work-card-bottom">
-            <div>
-              <h3>Live Operations Dashboards</h3>
-              <p>Real-time KPI dashboards pulling sales, inventory and staff data into one live view for faster day-to-day decisions.</p>
-            </div>
-            <span class="work-arrow" aria-hidden="true">→</span>
-          </div>
-        </a>
-        <a class="work-card work-grad-4 reveal" data-category="app" href="work/app-building.html">
-          <video class="work-card-video" src="media/work-app-building.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
-          <div class="work-scrim"></div>
-          <div class="work-card-top">
-            <span class="work-chip"><span class="work-chip-dot"></span>App Building</span>
-            <span class="work-tags">iOS · Android · Web</span>
-          </div>
-          <div class="work-card-bottom">
-            <div>
-              <h3>Custom App Development</h3>
-              <p>End-to-end mobile and web app builds, from MVP to production rollout, backed by ongoing support.</p>
-            </div>
-            <span class="work-arrow" aria-hidden="true">→</span>
-          </div>
-        </a>
-        <a class="work-card work-grad-6 reveal" data-category="logistics" href="work/logistics.html">
-          <video class="work-card-video" src="media/work-logistics.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
-          <div class="work-scrim"></div>
-          <div class="work-card-top">
-            <span class="work-chip"><span class="work-chip-dot"></span>Logistics</span>
-            <span class="work-tags">Routing · Fleet Ops</span>
-          </div>
-          <div class="work-card-bottom">
-            <div>
-              <h3>Logistics Software Suite</h3>
-              <p>Real-time routing, dispatch and fleet visibility software built for regional delivery and freight operations.</p>
-            </div>
-            <span class="work-arrow" aria-hidden="true">→</span>
-          </div>
-        </a>
-        <a class="work-card work-grad-1 reveal" data-category="accounting" href="work/accounting.html">
-          <video class="work-card-video" src="media/work-accounting.mp4" autoplay muted loop playsinline aria-hidden="true"></video>
-          <div class="work-scrim"></div>
-          <div class="work-card-top">
-            <span class="work-chip"><span class="work-chip-dot"></span>Accounting</span>
-            <span class="work-tags">Bookkeeping · Reporting</span>
-          </div>
-          <div class="work-card-bottom">
-            <div>
-              <h3>Accounting &amp; Finance Platform</h3>
-              <p>Automated bookkeeping, invoicing and financial reporting software that keeps growing businesses audit-ready.</p>
-            </div>
-            <span class="work-arrow" aria-hidden="true">→</span>
-          </div>
-        </a>
-      </div>
+      <a class="deck-card deck-card--link" style="z-index:3" href="https://weddings.smartsolutionssvg.com/" target="_blank" rel="noopener noreferrer">
+        <div class="deck-media">
+          <video src="media/work-wedding.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          <span class="deck-chip">Wedding Packages</span>
+          <div class="deck-dim"></div>
+          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Wedding Package Builder</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
+        </div>
+      </a>
+
+      <a class="deck-card deck-card--link" style="z-index:4" href="work/security.html">
+        <div class="deck-media">
+          <video src="media/work-security.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          <span class="deck-chip">Security</span>
+          <div class="deck-dim"></div>
+          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Adaptive Security Framework</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
+        </div>
+      </a>
+
+      <a class="deck-card deck-card--link" style="z-index:5" href="work/live-dashboards.html">
+        <div class="deck-media">
+          <video src="media/work-aviation.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          <span class="deck-chip">Live Dashboards</span>
+          <div class="deck-dim"></div>
+          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Live Operations Dashboards</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
+        </div>
+      </a>
+
+      <a class="deck-card deck-card--link" style="z-index:6" href="work/app-building.html">
+        <div class="deck-media">
+          <video src="media/work-app-building.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          <span class="deck-chip">App Building</span>
+          <div class="deck-dim"></div>
+          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Custom App Development</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
+        </div>
+      </a>
+
+      <a class="deck-card deck-card--link" style="z-index:7" href="work/logistics.html">
+        <div class="deck-media">
+          <video src="media/work-logistics.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          <span class="deck-chip">Logistics</span>
+          <div class="deck-dim"></div>
+          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Logistics Software Suite</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
+        </div>
+      </a>
+
+      <a class="deck-card deck-card--link" style="z-index:8" href="work/accounting.html">
+        <div class="deck-media">
+          <video src="media/work-accounting.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          <span class="deck-chip">Accounting</span>
+          <div class="deck-dim"></div>
+          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Accounting &amp; Finance Platform</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
+        </div>
+      </a>
+
     </div>
   </section>
 
-  <!-- LOGO STRIP -->
+    <!-- LOGO STRIP -->
   <section class="logo-strip">
     <div class="container">
       <p class="section-label">Trusted by forward-thinking teams</p>
@@ -231,9 +166,10 @@
     <div class="container">
       <p class="section-label reveal">What we do</p>
       <h2 class="section-title reveal">Full-spectrum technology capability</h2>
+      <div id="critter-band" aria-hidden="true"></div>
       <p class="section-sub reveal" data-content-key="services_intro">From strategy to shipped product — one team, end to end.</p>
 
-      <div class="card-grid">
+      <div class="card-grid" hidden>
         <article class="service-card reveal">
           <canvas class="service-card-canvas" aria-hidden="true"></canvas>
           <div class="card-icon">◇</div>
@@ -589,5 +525,7 @@
 </footer>
 
 <script src="js/main.js"></script>
+<script src="js/work-deck.js"></script>
+<script src="js/critter-bundle.js"></script>
 </body>
 </html>
