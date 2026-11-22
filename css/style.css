@@ -296,8 +296,9 @@ button { font: inherit; cursor: pointer; }
 .hero-stats dt::after{ content: attr(data-suffix); }
 .hero-stats dd{
   font-size: 0.82rem;
-  color: var(--text-faint);
+  color: var(--text);
   margin-top: 4px;
+  font-weight: 700;
 }
 
 /* ============ Logo strip ============ */

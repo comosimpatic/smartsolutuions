@@ -31,6 +31,15 @@
 }
 @media (max-width: 640px) { .deck-card { width: 92vw; } }
 
+/* the first (hero) card: sit at the top of the stage, away from the stacking
+   work cards below, and run a touch wider than the rest */
+.deck-card--hero {
+  align-self: start;                 /* .deck-stage centers by default — pin this one up top */
+  margin-top: clamp(8px, 2.4svh, 28px);
+  width: min(96vw, calc(74svh * 16 / 9), 1280px);
+}
+@media (max-width: 640px) { .deck-card--hero { width: 96vw; } }
+
 .deck-media {
   position: relative; overflow: hidden;
   border-radius: 24px;

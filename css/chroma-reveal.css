@@ -1,29 +1,43 @@
 /* ───────────────────────────────────────────────────────────────────────────
-   Text Chroma Reveal  —  GSAP + SplitText reveal, layered with React-Bits-style
-   effects (living chroma gradient + shiny sweep). Robust (per-char solid hues,
-   so transforms, hue-cycling and the shimmer all compose cleanly).
+   Text Chroma Reveal — "Jet Black → Chrome" variant.
+   GSAP + SplitText handle the staggered character reveal (see chroma-reveal.js).
+   Here: each letter is jet black with a silver/white chrome highlight that
+   sweeps across like reflective metal. Per-char gradient (vertical-ish), so the
+   reveal transforms, the sweep and the clip all compose cleanly.
    ─────────────────────────────────────────────────────────────────────────── */
 
-/* living chroma: the whole word's hue cycles continuously */
-.chroma-live {
-  animation: chroma-hue 8s linear infinite;
-}
-@keyframes chroma-hue {
-  to { filter: hue-rotate(360deg); }
-}
-
-/* each letter: inline-block (for GSAP transforms) + a staggered "shine" sweep */
 .chroma-live .char {
   display: inline-block;
-  animation: char-shine 5s ease-in-out infinite;
-  animation-delay: calc(var(--i, 0) * 0.07s);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(
+    100deg,
+    #6b7177 0%, #2b2e32 10%, #0a0a0b 20%,
+    #c3c9d0 30%, #ffffff 40%, #ffffff 46%, #dfe3e8 52%, #9aa0a7 60%,
+    #0a0a0b 72%, #2b2e32 86%, #6b7177 100%
+  );
+  background-size: 220% 100%;
+  background-position: 130% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: chrome-sweep 3.6s linear infinite;
+  animation-delay: calc(var(--i, 0) * 0.08s);
+  transition: transform .28s cubic-bezier(.22,1,.36,1), filter .28s ease;
+  will-change: transform, opacity, background-position, filter;
 }
-@keyframes char-shine {
-  0%, 84%, 100% { filter: brightness(1); }
-  90%           { filter: brightness(1.95) drop-shadow(0 0 8px currentColor); }
+
+/* hover: the letters lift in a little wave and cast a shadow */
+.logo:hover .char {
+  transform: translateY(-6px);
+  filter: drop-shadow(0 7px 6px rgba(0,0,0,0.42));
+  transition-delay: calc(var(--i, 0) * 0.025s);
+}
+
+/* the chrome highlight glides across the letters */
+@keyframes chrome-sweep {
+  to { background-position: -130% 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chroma-live,
-  .chroma-live .char { animation: none !important; }
+  .chroma-live .char { animation: none !important; background-position: 46% 0 !important; }
 }

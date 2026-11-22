@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio — Build Your Package · Smart Solutions</title>
+<meta name="description" content="Pick your website features and see your price — a feel for your future site before you commit. A Smart Solutions client studio.">
+<link rel="icon" type="image/png" href="assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<style>
+  body { font-family: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif; }
+</style>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+<!-- header -->
+<header class="sticky top-0 z-40 bg-white/85 backdrop-blur border-b border-gray-100">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2 font-bold tracking-tight">
+      <img src="assets/logo-mark.png" alt="" class="w-7 h-7">
+      <span>Smart <span class="text-blue-600">Solutions</span></span>
+    </a>
+    <a href="index.html" class="text-sm text-gray-500 hover:text-gray-900">← Back to site</a>
+  </div>
+</header>
+
+<!-- hero / framing -->
+<section class="max-w-3xl mx-auto px-6 pt-16 pb-6 text-center">
+  <span class="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-blue-600">Client Studio · work in progress</span>
+  <h1 class="text-4xl sm:text-5xl font-bold tracking-tight mt-4">Build your package</h1>
+  <p class="text-gray-500 mt-4 text-lg">Pick the features you want and watch your price update live — a feel for your future site before you commit. No sign-up, just play.</p>
+</section>
+
+<!-- ───────── package / pricing builder (ported from the pasted component) ───────── -->
+<section id="pricing" class="py-12 px-6 max-w-6xl mx-auto">
+  <!-- plan toggle -->
+  <div class="flex justify-center mb-10">
+    <div class="bg-gray-100 rounded-full p-1 flex">
+      <button data-plan="monthly" class="px-6 py-2 rounded-full font-medium transition bg-blue-600 text-white">Monthly</button>
+      <button data-plan="oneTime" class="px-6 py-2 rounded-full font-medium transition text-gray-600">One-Time</button>
+    </div>
+  </div>
+
+  <!-- base package -->
+  <div class="border-2 border-blue-600 rounded-2xl p-8 mb-10 text-center">
+    <span class="text-sm font-semibold text-blue-600 uppercase">Included with every plan</span>
+    <h3 class="text-2xl font-bold mt-2">Base Package</h3>
+    <p class="text-gray-500 mt-1">Professional website, hosting, domain setup &amp; updates</p>
+    <p id="base-price" class="text-4xl font-bold mt-4">$40/mo</p>
+  </div>
+
+  <!-- add-on modules (rendered by JS) -->
+  <div id="modules" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"></div>
+
+  <!-- total -->
+  <div class="bg-gray-900 text-white rounded-2xl p-8 flex flex-col md:flex-row justify-between items-center gap-4">
+    <div>
+      <p class="text-gray-400 text-sm">Your estimated total</p>
+      <p id="total" class="text-3xl font-bold">$40/month</p>
+      <p id="total-note" class="text-gray-400 text-sm mt-1">12-month minimum · hosting &amp; updates included</p>
+    </div>
+    <a href="index.html#contact" class="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-full font-semibold">Get Started</a>
+  </div>
+
+  <p class="text-center mt-6 text-sm text-blue-600 font-medium">🎉 Founding client offer: our first clients get a special discount. Ask us!</p>
+</section>
+
+<script>
+  var base = { name: "Base Package", desc: "Professional website, hosting, domain setup & updates", monthly: 40, oneTime: "500–800" };
+  var modules = [
+    { id: "shop",      name: "Online Shop",   desc: "Product listings, cart & order management",    monthly: 25, oneTime: 400 },
+    { id: "bookings",  name: "Bookings",      desc: "Online appointments & reservations",           monthly: 20, oneTime: 300 },
+    { id: "payments",  name: "Payments",      desc: "Secure online payments",                        monthly: 15, oneTime: 200 },
+    { id: "dashboard", name: "Live Dashboard",desc: "Real-time sales, customers & activity",         monthly: 30, oneTime: 500 }
+  ];
+  var plan = "monthly";
+  var selected = [];
+
+  var grid = document.getElementById("modules");
+  var planBtns = Array.prototype.slice.call(document.querySelectorAll("[data-plan]"));
+  var basePriceEl = document.getElementById("base-price");
+  var totalEl = document.getElementById("total");
+  var totalNoteEl = document.getElementById("total-note");
+
+  function modulePrice(m) { return plan === "monthly" ? "+$" + m.monthly + "/mo" : "+$" + m.oneTime; }
+
+  function renderModules() {
+    grid.innerHTML = modules.map(function (m) {
+      var on = selected.indexOf(m.id) !== -1;
+      return '<button data-id="' + m.id + '" class="text-left rounded-2xl p-6 border-2 transition ' +
+        (on ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300") + '">' +
+        '<div class="flex justify-between items-center mb-2">' +
+          '<h4 class="font-bold text-lg">' + m.name + '</h4>' +
+          '<input type="checkbox" readonly ' + (on ? "checked" : "") + ' class="w-5 h-5 accent-blue-600">' +
+        '</div>' +
+        '<p class="text-gray-500 text-sm mb-4">' + m.desc + '</p>' +
+        '<p class="text-2xl font-bold">' + modulePrice(m) + '</p>' +
+      '</button>';
+    }).join("");
+  }
+
+  function update() {
+    planBtns.forEach(function (b) {
+      var active = b.getAttribute("data-plan") === plan;
+      b.className = "px-6 py-2 rounded-full font-medium transition " + (active ? "bg-blue-600 text-white" : "text-gray-600");
+    });
+    basePriceEl.textContent = plan === "monthly" ? "$" + base.monthly + "/mo" : "$" + base.oneTime;
+    var addOns = modules.filter(function (m) { return selected.indexOf(m.id) !== -1; });
+    var monthlyTotal = base.monthly + addOns.reduce(function (t, m) { return t + m.monthly; }, 0);
+    var oneTimeAddOns = addOns.reduce(function (t, m) { return t + m.oneTime; }, 0);
+    totalEl.textContent = plan === "monthly"
+      ? "$" + monthlyTotal + "/month"
+      : "$" + (500 + oneTimeAddOns) + " – $" + (800 + oneTimeAddOns);
+    totalNoteEl.textContent = plan === "monthly"
+      ? "12-month minimum · hosting & updates included"
+      : "Small yearly hosting fee applies if we host";
+    renderModules();
+  }
+
+  grid.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-id]");
+    if (!btn) return;
+    var id = btn.getAttribute("data-id");
+    selected = selected.indexOf(id) !== -1 ? selected.filter(function (x) { return x !== id; }) : selected.concat([id]);
+    update();
+  });
+  planBtns.forEach(function (b) { b.addEventListener("click", function () { plan = b.getAttribute("data-plan"); update(); }); });
+  update();
+</script>
+</body>
+</html>
