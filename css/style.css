@@ -130,7 +130,7 @@ button { font: inherit; cursor: pointer; }
 .site-header.scrolled{
   background: rgba(247,248,251,0.85);
   backdrop-filter: blur(14px);
-  border-bottom-color: var(--border);
+  border-bottom-color: transparent;
   padding: 12px 0;
 }
 
@@ -801,9 +801,11 @@ section{ padding: 110px 0; position: relative; }
 
 /* ============ Footer ============ */
 .site-footer{
-  border-top: 1px solid var(--border);
+  border-top: none;
   padding: 44px 0;
 }
+/* hide the animated particle background */
+#bg-canvas{ display: none !important; }
 .footer-inner{
   display: flex;
   align-items: center;

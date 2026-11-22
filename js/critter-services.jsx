@@ -107,7 +107,7 @@ export type World = { w: number; h: number; floor: number; gravity: number; boun
 export type Hand = { x: number; y: number }
 /** Creature unit size in px for a stage width: one creature is ~1.36 units across. Phones get a smaller unit so all six fit side by side instead of stacking into the haze. */
 export function unitFor(w: number) {
-  return Math.max(40, Math.min(150, w < 640 ? w / 8.8 : w / 9.4))
+  return Math.max(36, Math.min(116, w < 640 ? w / 9.8 : w / 12))
 }
 /** Floor line, px above the stage bottom */
 export function floorFor(unit: number) {

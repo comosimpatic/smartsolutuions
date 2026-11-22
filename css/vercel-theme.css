@@ -1,0 +1,53 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   "Vercel" theme — from 21st.dev (community theme by serafimcloud)
+   https://21st.dev/community/themes/vercel
+   Mapped from the theme's shadcn tokens onto Smart Solutions' CSS variables.
+   Clean black & white, near-white surfaces, black primary, Geist font.
+   Remove this stylesheet link to revert to the original brand theme.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  --bg:             #fafafa;   /* page */
+  --bg-alt:         #f2f2f2;
+  --surface:        #ffffff;   /* cards */
+  --surface-strong: #f5f5f5;
+  --border:         #eaeaea;
+  --text:           #000000;   /* foreground */
+  --text-dim:       #666666;   /* muted foreground */
+  --text-faint:     #8f8f8f;
+  --accent:         #000000;   /* primary */
+  --accent-2:       #171717;
+  --accent-3:       #666666;
+  --radius:         8px;
+}
+
+/* Geist everywhere */
+body {
+  font-family: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+h1, h2, h3, h4, h5,
+.section-title, .hero h1, .logo span, .hero-stats dt {
+  font-family: "Geist", system-ui, sans-serif !important;
+  letter-spacing: -0.02em;
+}
+
+/* Vercel-style buttons: solid black primary, bordered secondary */
+.btn-primary {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #000000 !important;
+}
+.btn-primary:hover { background: #171717 !important; }
+.btn-ghost, .btn-secondary {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid var(--border) !important;
+}
+.btn-ghost:hover, .btn-secondary:hover { background: #fafafa !important; border-color: #000 !important; }
+
+/* keep the giant SERVICES wordmark black (not blue) to match the theme */
+.fcf-root .fcf-word { color: #000000 !important; }
+
+/* the hero's gradient text -> solid black for the minimal look */
+.text-gradient { background: none !important; -webkit-text-fill-color: #000 !important; color: #000 !important; }

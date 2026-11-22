@@ -13,5 +13,20 @@
 /* we only want the giant wordmark + the critters */
 .fcf-root .fcf-top,
 .fcf-root .fcf-bottom { display: none !important; }
-/* a touch smaller than the default 22vw so it reads as a section band */
-.fcf-root .fcf-word { font-size: 15vw !important; color: var(--accent, #1d4ed8) !important; }
+/* break the band out of the centred container to use the full page width */
+#critter-band {
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  margin-top: -3.5vw;   /* lift the whole SERVICES + critters composition higher */
+}
+/* big, bold SERVICES wordmark behind the critters — now full-width, no clipping */
+.fcf-root .fcf-word {
+  font-size: 20vw !important;
+  color: var(--accent, #1d4ed8) !important;
+  text-transform: uppercase;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em !important;
+  margin-top: 0 !important;        /* lift the word up so the critters sit at its feet */
+}
+/* a little floor room under the word so the critters rest at its feet */
+.fcf-root { padding-bottom: 18px !important; }

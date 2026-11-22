@@ -1,0 +1,29 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Text Chroma Reveal  —  GSAP + SplitText reveal, layered with React-Bits-style
+   effects (living chroma gradient + shiny sweep). Robust (per-char solid hues,
+   so transforms, hue-cycling and the shimmer all compose cleanly).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* living chroma: the whole word's hue cycles continuously */
+.chroma-live {
+  animation: chroma-hue 8s linear infinite;
+}
+@keyframes chroma-hue {
+  to { filter: hue-rotate(360deg); }
+}
+
+/* each letter: inline-block (for GSAP transforms) + a staggered "shine" sweep */
+.chroma-live .char {
+  display: inline-block;
+  animation: char-shine 5s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.07s);
+}
+@keyframes char-shine {
+  0%, 84%, 100% { filter: brightness(1); }
+  90%           { filter: brightness(1.95) drop-shadow(0 0 8px currentColor); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chroma-live,
+  .chroma-live .char { animation: none !important; }
+}
