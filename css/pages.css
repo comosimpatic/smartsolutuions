@@ -1,0 +1,71 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Multi-page extras — the lean landing's teaser grid, the per-page hero header,
+   the shared contact CTA, and the active-nav state. Layers on top of style.css.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* active nav item */
+.main-nav a.is-active { color: var(--text); font-weight: 600; }
+
+/* per-page hero (Services / Process / About page tops) */
+.page-hero {
+  padding: clamp(130px, 16vh, 180px) 0 20px;
+  text-align: center;
+}
+.page-hero .section-sub { margin-left: auto; margin-right: auto; max-width: 62ch; }
+
+/* give section tops that follow a page-hero some breathing room */
+.process--page .timeline { margin-top: 24px; }
+.services--page { padding-top: clamp(92px, 11vh, 124px); }
+.services--page > .container > .section-title { margin-bottom: 6px; }
+.about--page { padding-top: clamp(130px, 16vh, 180px); }
+
+/* ── landing teaser grid ── */
+.page-teasers { padding: clamp(60px, 9vh, 110px) 0; text-align: center; }
+.teaser-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin-top: 40px;
+  text-align: left;
+}
+@media (min-width: 620px) { .teaser-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 960px) { .teaser-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.teaser-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease, border-color .32s ease;
+}
+.teaser-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(16,22,43,.12);
+  border-color: var(--text);
+}
+.teaser-icon { font-size: 1.9rem; line-height: 1; color: var(--accent); }
+.teaser-card h3 { font-size: 1.25rem; margin: 2px 0 0; }
+.teaser-card p { color: var(--text-dim); font-size: .95rem; margin: 0; flex: 1; }
+.teaser-go { font-weight: 600; font-size: .9rem; color: var(--text); }
+
+.teaser-card--wide { grid-column: 1 / -1; }
+@media (min-width: 620px) {
+  .teaser-card--wide {
+    flex-direction: row;
+    align-items: center;
+    gap: 20px 28px;
+    flex-wrap: wrap;
+  }
+  .teaser-card--wide .teaser-icon { font-size: 2.4rem; }
+  .teaser-card--wide h3 { flex: 0 0 auto; }
+  .teaser-card--wide p { flex: 1 1 300px; }
+}
+
+/* ── shared contact CTA at the foot of each page ── */
+.page-cta { padding: clamp(70px, 11vh, 130px) 0; text-align: center; }
+.page-cta .section-sub { margin: 16px auto 28px; max-width: 54ch; }

@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/chroma-reveal.css">
 <link rel="stylesheet" href="css/critter-band.css">
 <link rel="stylesheet" href="css/live-dash.css">
+<link rel="stylesheet" href="css/pages.css">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/vercel-theme.css">
 </head>
@@ -21,36 +22,29 @@
 
 <canvas id="bg-canvas"></canvas>
 <div class="grid-overlay"></div>
-
 <header class="site-header" id="site-header">
   <div class="container header-inner">
-    <a href="#top" class="logo">
+    <a href="index.html" class="logo">
       <img class="logo-mark" src="assets/logo-mark.png" alt="Smart Solutions">
       <span>Smart <em>Solutions</em></span>
     </a>
     <nav class="main-nav" id="main-nav">
-      <a href="#services">Services</a>
-      <a href="#process">Process</a>
-      <a href="#work">Work</a>
-      <a href="#about">About</a>
+      <a href="services.html">Services</a>
+      <a href="playground.html">Playground</a>
+      <a href="work.html">Work</a>
+      <a href="about.html">About</a>
       <a href="studio.html">Pricing</a>
-      <a href="#contact" class="nav-cta">Start a Project</a>
+      <a href="index.html#contact" class="nav-cta">Start a Project</a>
     </nav>
     <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
   </div>
 </header>
-
 <main id="top">
 
-  <!-- FEATURED WORK (scroll-stacking deck) -->
-  <section class="work-deck" id="work" aria-label="Selected work">
-    <div class="deck-stage">
-
-      <article class="deck-card deck-card--hero" style="z-index:0">
-        <div class="deck-media deck-media--hero hero">
-<video class="hero-bg-video" autoplay muted loop playsinline aria-hidden="true">
+  <section class="hero">
+    <video class="hero-bg-video" autoplay muted loop playsinline aria-hidden="true">
       <source src="media/hero-bg.mp4" type="video/mp4">
     </video>
     <div class="hero-video-scrim"></div>
@@ -64,8 +58,8 @@
         that run tomorrow's business.
       </h1>
       <div class="hero-actions reveal">
-        <a href="#contact" class="btn btn-primary">Start a Project <span aria-hidden="true">→</span></a>
-        <a href="#services" class="btn btn-ghost">Explore Services</a>
+        <a href="index.html#contact" class="btn btn-primary">Start a Project <span aria-hidden="true">&rarr;</span></a>
+        <a href="services.html" class="btn btn-ghost">Explore Services</a>
       </div>
       <dl class="hero-stats reveal">
         <div><dt data-count="120">0</dt><dd>Projects Delivered</dd></div>
@@ -74,104 +68,8 @@
         <div><dt data-count="14">0</dt><dd>Countries Served</dd></div>
       </dl>
     </div>
-        </div>
-      </article>
-
-      <a class="deck-card deck-card--link" style="z-index:1" href="work/ai-platform.html">
-        <div class="deck-media">
-          <video src="media/work-ai-platform.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-          <span class="deck-chip">AI Platform</span>
-          <div class="deck-dim"></div>
-          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Predictive Ops Engine</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
-        </div>
-      </a>
-
-      <a class="deck-card deck-card--link" style="z-index:2" href="work/tech-store.html">
-        <div class="deck-media">
-          <video src="media/work-tech.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-          <span class="deck-chip">Tech Store</span>
-          <div class="deck-dim"></div>
-          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Tech Marketplace</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
-        </div>
-      </a>
-
-      <a class="deck-card deck-card--link" style="z-index:4" href="work/security.html">
-        <div class="deck-media">
-          <video src="media/work-security.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-          <span class="deck-chip">Security</span>
-          <div class="deck-dim"></div>
-          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Adaptive Security Framework</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
-        </div>
-      </a>
-
-      <a class="deck-card deck-card--link" style="z-index:5" href="work/live-dashboards.html">
-        <div class="deck-media">
-          <div class="live-dash" aria-hidden="true">
-            <div class="ld-top">
-              <span class="ld-title">Operations Monitor</span>
-              <span class="ld-live"><i></i>LIVE</span>
-            </div>
-            <div class="ld-kpis">
-              <div class="ld-kpi"><span class="ld-kpi-label">Requests</span><span class="ld-kpi-val" data-kpi="rps">0</span></div>
-              <div class="ld-kpi"><span class="ld-kpi-label">Uptime</span><span class="ld-kpi-val" data-kpi="uptime">0</span></div>
-              <div class="ld-kpi"><span class="ld-kpi-label">Latency</span><span class="ld-kpi-val" data-kpi="latency">0</span></div>
-            </div>
-            <div class="ld-chart">
-              <svg viewBox="0 0 300 100" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="ld-grad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0" stop-color="#5b8cff"/><stop offset="1" stop-color="#8b5cf6"/>
-                  </linearGradient>
-                  <linearGradient id="ld-fill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" stop-color="#5b8cff" stop-opacity=".45"/><stop offset="1" stop-color="#5b8cff" stop-opacity="0"/>
-                  </linearGradient>
-                </defs>
-                <path class="ld-area" d=""/>
-                <path class="ld-line" d=""/>
-              </svg>
-            </div>
-            <div class="ld-bars">
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-            </div>
-          </div>
-          <span class="deck-chip">Live Dashboards</span>
-          <div class="deck-dim"></div>
-          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Live Operations Dashboards</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
-        </div>
-      </a>
-
-      <a class="deck-card deck-card--link" style="z-index:6" href="work/app-building.html">
-        <div class="deck-media">
-          <video src="media/work-app-building.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-          <span class="deck-chip">App Building</span>
-          <div class="deck-dim"></div>
-          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Custom App Development</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
-        </div>
-      </a>
-
-      <a class="deck-card deck-card--link" style="z-index:7" href="work/logistics.html">
-        <div class="deck-media">
-          <video src="media/work-logistics.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-          <span class="deck-chip">Logistics</span>
-          <div class="deck-dim"></div>
-          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Logistics Software Suite</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
-        </div>
-      </a>
-
-      <a class="deck-card deck-card--link" style="z-index:8" href="work/accounting.html">
-        <div class="deck-media">
-          <video src="media/work-accounting.mp4" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-          <span class="deck-chip">Accounting</span>
-          <div class="deck-dim"></div>
-          <span class="deck-visit"><svg class="deck-corner deck-corner--top" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><svg class="deck-corner deck-corner--left" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M18 0 V18 H0 A18 18 0 0 0 18 0 Z"/></svg><span class="deck-visit-inner"><span class="deck-visit-text"><strong>Accounting &amp; Finance Platform</strong></span><span class="deck-visit-arrow" aria-hidden="true">&rarr;</span></span></span>
-        </div>
-      </a>
-
-    </div>
   </section>
 
-    <!-- LOGO STRIP -->
   <section class="logo-strip">
     <div class="container">
       <p class="section-label">Trusted by forward-thinking teams</p>
@@ -184,306 +82,50 @@
     </div>
   </section>
 
-  <!-- SERVICES -->
-  <section class="services" id="services">
+  <section class="page-teasers">
     <div class="container">
-      <div id="critter-band" aria-hidden="true"></div>
-      <p class="section-sub reveal" data-content-key="services_intro">From strategy to shipped product — one team, end to end.</p>
-
-      <div class="card-grid" hidden>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">◇</div>
-          <h3>AI &amp; Automation</h3>
-          <p>Custom machine learning models, LLM-powered products and workflow automation that cut operational cost.</p>
-          <span class="service-tag">Cutting Edge</span>
-        </article>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">▢</div>
-          <h3>Cloud &amp; Infrastructure</h3>
-          <p>Scalable, resilient architecture on AWS, GCP and Azure — built with infrastructure-as-code from day one.</p>
-          <span class="service-tag">Enterprise Ready</span>
-        </article>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">◈</div>
-          <h3>Custom Software</h3>
-          <p>Web, mobile and platform engineering tailored to your workflow — not the other way around.</p>
-          <span class="service-tag">Full Stack</span>
-        </article>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">⬡</div>
-          <h3>Cybersecurity</h3>
-          <p>Threat modeling, penetration testing and secure-by-design engineering for systems that can't fail.</p>
-          <span class="service-tag">Secure by Design</span>
-        </article>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">◉</div>
-          <h3>Data &amp; Analytics</h3>
-          <p>Pipelines and dashboards that turn raw data into decisions your team can act on in real time.</p>
-          <span class="service-tag">Data Driven</span>
-        </article>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">◫</div>
-          <h3>Digital Strategy</h3>
-          <p>Technology roadmaps and transformation programs aligned to measurable business outcomes.</p>
-          <span class="service-tag">Outcome Focused</span>
-        </article>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">◐</div>
-          <h3>Marketing &amp; Advertising</h3>
-          <p>Data-driven campaigns across social, search and display, plus brand strategy and content that converts.</p>
-          <span class="service-tag">ROI Focused</span>
-        </article>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">◧</div>
-          <h3>Phone &amp; Computer Repair</h3>
-          <p>Same-day screen, battery and hardware repair for phones, laptops and desktops — certified techs, genuine parts.</p>
-          <span class="service-tag">Same Day</span>
-          <a href="repair.html" class="card-link">Explore repair services <span aria-hidden="true">→</span></a>
-        </article>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">❖</div>
-          <h3>Wedding Planning</h3>
-          <p>Build a custom wedding package with trusted local vendors — beauty, entertainment, catering and more — with a live total as you go.</p>
-          <span class="service-tag">Now Booking</span>
-          <a href="https://weddings.smartsolutionssvg.com/" class="card-link">Explore wedding packages <span aria-hidden="true">→</span></a>
-        </article>
-        <article class="service-card reveal">
-          <canvas class="service-card-canvas" aria-hidden="true"></canvas>
-          <div class="card-icon">⬢</div>
-          <h3>Progressive Web Apps</h3>
-          <p>Custom PWAs for Caribbean small businesses — EC$0 upfront, built and maintained as an ongoing partnership.</p>
-          <span class="service-tag">EC$0 Upfront</span>
-          <a href="#partnership" class="card-link">See the partnership model <span aria-hidden="true">→</span></a>
-        </article>
+      <p class="section-label reveal">Explore</p>
+      <h2 class="section-title reveal">Everything we do, one click away</h2>
+      <div class="teaser-grid">
+        <a class="teaser-card reveal" href="services.html">
+          <span class="teaser-icon" aria-hidden="true">&#9671;</span>
+          <h3>Services</h3>
+          <p>AI, cloud, custom software, security, data, marketing &amp; device repair &mdash; one team, end to end.</p>
+          <span class="teaser-go">Explore services <span aria-hidden="true">&rarr;</span></span>
+        </a>
+        <a class="teaser-card reveal" href="work.html">
+          <span class="teaser-icon" aria-hidden="true">&#9636;</span>
+          <h3>Work</h3>
+          <p>Real systems we've shipped and keep running for clients across the Caribbean and beyond.</p>
+          <span class="teaser-go">See the work <span aria-hidden="true">&rarr;</span></span>
+        </a>
+        <a class="teaser-card reveal" href="playground.html">
+          <span class="teaser-icon" aria-hidden="true">&#9707;</span>
+          <h3>Playground</h3>
+          <p>A space to explore, preview and play with ideas &mdash; more coming soon.</p>
+          <span class="teaser-go">Open the playground <span aria-hidden="true">&rarr;</span></span>
+        </a>
+        <a class="teaser-card reveal" href="about.html">
+          <span class="teaser-icon" aria-hidden="true">&#9673;</span>
+          <h3>About</h3>
+          <p>Engineers first, consultants second. The people who'll still answer the phone after launch.</p>
+          <span class="teaser-go">Meet the team <span aria-hidden="true">&rarr;</span></span>
+        </a>
+        <a class="teaser-card reveal teaser-card--wide" href="studio.html">
+          <span class="teaser-icon" aria-hidden="true">&#9670;</span>
+          <h3>Pricing &amp; Studio</h3>
+          <p>Build your package, pick your features and watch your price update live &mdash; a feel for your future site before you commit.</p>
+          <span class="teaser-go">Open the studio <span aria-hidden="true">&rarr;</span></span>
+        </a>
       </div>
     </div>
   </section>
 
-  <!-- PARTNERSHIP -->
-  <section class="partnership" id="partnership">
-    <div class="container">
-      <p class="section-label reveal">For Caribbean small businesses</p>
-      <h2 class="section-title reveal">Launch a Progressive Web App — EC$0 upfront</h2>
-      <p class="section-sub reveal" data-content-key="partnership_intro">
-        We build custom PWAs for taxis, restaurants &amp; bars, electronics retail, and
-        property &amp; hospitality businesses across the Caribbean — Next.js, deployed on
-        Vercel, with WhatsApp API integration as a core feature. Phone/IT repair and
-        live dashboard integration come standard, so you get both the software and the
-        hands-on support to keep it running.
-      </p>
-
-      <div class="partnership-grid">
-        <ul class="about-list partnership-terms reveal">
-          <li>EC$0 upfront — we build, design, test and deploy your PWA at no upfront cost</li>
-          <li>You pay a monthly maintenance fee based on your tier</li>
-          <li>12-month minimum commitment — protects both sides while the partnership proves out</li>
-          <li>After 12 months: continue month-to-month, or buy out the framework outright</li>
-          <li>Your content is always yours — photos, business name, listings, contacts</li>
-        </ul>
-
-        <div class="timeline partnership-timeline reveal">
-          <div class="timeline-step">
-            <span class="step-num">01</span>
-            <h3>Scoping Call</h3>
-            <p>We learn your business, your problems, what you actually need.</p>
-          </div>
-          <div class="timeline-step">
-            <span class="step-num">02</span>
-            <h3>We Build It</h3>
-            <p>Full PWA designed, developed, tested and deployed at EC$0 upfront.</p>
-          </div>
-          <div class="timeline-step">
-            <span class="step-num">03</span>
-            <h3>You Go Live</h3>
-            <p>Your app launches on your domain — customers can find, book and order immediately.</p>
-          </div>
-          <div class="timeline-step">
-            <span class="step-num">04</span>
-            <h3>We Stay With You</h3>
-            <p>Monthly updates, content changes, support, dashboard monitoring and repair/IT consultation.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="pricing-grid">
-        <article class="pricing-card reveal">
-          <h3>Starter</h3>
-          <p class="pricing-price">EC$300<span>/mo</span></p>
-          <p class="pricing-includes">Basic PWA, WhatsApp booking button, click-to-call, service pages</p>
-        </article>
-        <article class="pricing-card pricing-featured reveal">
-          <span class="pricing-badge">Most popular</span>
-          <h3>Growth</h3>
-          <p class="pricing-price">EC$400<span>/mo</span></p>
-          <p class="pricing-includes">Everything in Starter, plus a full booking form and confirmation workflow</p>
-        </article>
-        <article class="pricing-card reveal">
-          <h3>Premium</h3>
-          <p class="pricing-price">EC$750<span>/mo</span></p>
-          <p class="pricing-includes">Everything in Growth, plus AI features, priority support and advanced analytics</p>
-        </article>
-      </div>
-
-      <div class="partnership-addons reveal">
-        <p class="section-label" style="text-align:left; margin-bottom:14px;">Optional add-on modules</p>
-        <div class="addon-tags">
-          <span class="addon-tag">Live Operations Dashboard</span>
-          <span class="addon-tag">AI Assistant</span>
-          <span class="addon-tag">GPS Tracking</span>
-          <span class="addon-tag">Payment Gateway Integration</span>
-        </div>
-      </div>
-
-      <div class="partnership-proof reveal">
-        <p class="section-label" style="text-align:left; margin-bottom:14px;">Live builds, real businesses</p>
-        <div class="addon-tags">
-          <span class="addon-tag">Ivory Bell</span>
-          <span class="addon-tag">Antilles X</span>
-          <span class="addon-tag">NAEBBIRAC Logistics</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PROCESS -->
-  <section class="process" id="process">
-    <div class="container">
-      <p class="section-label reveal">How we work</p>
-      <h2 class="section-title reveal">A process built for momentum</h2>
-
-      <div class="timeline">
-        <div class="timeline-step reveal">
-          <span class="step-num">01</span>
-          <h3>Discover</h3>
-          <p>We map your systems, constraints and goals to define what "done" actually looks like.</p>
-        </div>
-        <div class="timeline-step reveal">
-          <span class="step-num">02</span>
-          <h3>Design</h3>
-          <p>Architecture and product decisions get made together, before a single line of code ships.</p>
-        </div>
-        <div class="timeline-step reveal">
-          <span class="step-num">03</span>
-          <h3>Build</h3>
-          <p>Rapid, iterative delivery in short cycles — you see working software every week, not every quarter.</p>
-        </div>
-        <div class="timeline-step reveal">
-          <span class="step-num">04</span>
-          <h3>Scale</h3>
-          <p>We stay on to monitor, optimize and evolve the system as your business grows.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section class="about" id="about">
-    <div class="container about-inner">
-      <div class="about-text reveal">
-        <p class="section-label">Why Smart Solutions</p>
-        <h2 class="section-title">Engineers first. Consultants second.</h2>
-        <p class="section-sub" data-content-key="about_body">
-          We're a team of engineers, architects and strategists who believe the
-          best technology partners write code alongside you, not just slides
-          about it. No bloated teams, no jargon — just systems that work,
-          delivered by people who'll still answer the phone after launch.
-        </p>
-        <ul class="about-list">
-          <li>Senior-only engineering teams, no outsourced juniors</li>
-          <li>Fixed-scope delivery with weekly working demos</li>
-          <li>Security and scalability built in from day one</li>
-          <li>Direct access to your engineers — always</li>
-        </ul>
-      </div>
-      <div class="about-visual reveal" aria-hidden="true">
-        <div class="orbit-ring ring-1"></div>
-        <div class="orbit-ring ring-2"></div>
-        <div class="orbit-ring ring-3"></div>
-        <div class="orbit-core">SS</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FAQ -->
-  <section class="faq" id="faq">
-    <div class="container">
-      <p class="section-label reveal">Common questions</p>
-      <h2 class="section-title reveal">Frequently asked questions</h2>
-
-      <div class="faq-list">
-        <details class="faq-item reveal">
-          <summary class="faq-question">
-            How quickly can you start a project?
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>Most engagements kick off within one to two weeks of signing. We run a short discovery phase up front so the team starts with a clear scope instead of figuring it out mid-build.</p>
-          </div>
-        </details>
-        <details class="faq-item reveal">
-          <summary class="faq-question">
-            Do you work with early-stage startups, or only larger companies?
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>Both. We scope engagements to fit the team and budget in front of us — a startup's first production system looks different from an enterprise integration, and we plan for that up front.</p>
-          </div>
-        </details>
-        <details class="faq-item reveal">
-          <summary class="faq-question">
-            What does a fixed-scope engagement actually include?
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>A defined set of deliverables, a timeline, and weekly working demos so you always know what's shipped and what's next — no open-ended hourly billing.</p>
-          </div>
-        </details>
-        <details class="faq-item reveal">
-          <summary class="faq-question">
-            Can you support an existing in-house engineering team, not just full builds?
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>Yes — a lot of our work is embedding alongside an existing team for a specific system, migration, or crunch period rather than owning the whole build.</p>
-          </div>
-        </details>
-        <details class="faq-item reveal">
-          <summary class="faq-question">
-            Is the phone/computer repair side connected to the consulting side?
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>Same company, separate teams. Repair is handled by certified technicians independent of the consulting engineers — see the <a href="repair.html" style="color:var(--accent); font-weight:600;">repair page</a> for pricing and turnaround.</p>
-          </div>
-        </details>
-        <details class="faq-item reveal">
-          <summary class="faq-question">
-            What happens after launch — do you offer ongoing support?
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>We stay on to monitor, optimize and evolve the system as needed. The exact terms depend on the engagement and get scoped before launch, not after.</p>
-          </div>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- CONTACT -->
   <section class="contact" id="contact">
     <div class="container contact-inner">
       <p class="section-label reveal">Get in touch</p>
       <h2 class="section-title reveal">Let's build what's next.</h2>
-      <p class="section-sub reveal">Tell us about your project — we typically reply within one business day.</p>
+      <p class="section-sub reveal">Tell us about your project &mdash; we typically reply within one business day.</p>
 
       <form class="contact-form reveal" id="contact-form">
         <div class="form-row">
@@ -503,7 +145,7 @@
         <div class="form-field">
           <label for="service">Service interested in</label>
           <select id="service" name="service">
-            <option value="">Select a service…</option>
+            <option value="">Select a service&hellip;</option>
             <option>AI &amp; Automation</option>
             <option>Cloud &amp; Infrastructure</option>
             <option>Custom Software</option>
@@ -520,7 +162,7 @@
           <label for="message">Project details</label>
           <textarea id="message" name="message" rows="4" required></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Send Message <span aria-hidden="true">→</span></button>
+        <button type="submit" class="btn btn-primary">Send Message <span aria-hidden="true">&rarr;</span></button>
         <p class="form-note" id="form-note"></p>
       </form>
     </div>
@@ -530,18 +172,19 @@
 
 <footer class="site-footer">
   <div class="container footer-inner">
-    <a href="#top" class="logo">
+    <a href="index.html" class="logo">
       <img class="logo-mark" src="assets/logo-mark.png" alt="Smart Solutions">
       <span>Smart <em>Solutions</em></span>
     </a>
     <div class="footer-links">
       <a href="mailto:smartsolutionssvg@gmail.com">smartsolutionssvg@gmail.com</a>
-      <a href="#services">Services</a>
-      <a href="#work">Work</a>
-      <a href="#faq">FAQ</a>
-      <a href="#contact">Contact</a>
+      <a href="services.html">Services</a>
+      <a href="work.html">Work</a>
+      <a href="about.html">About</a>
+      <a href="studio.html">Pricing</a>
+      <a href="index.html#contact">Contact</a>
     </div>
-    <p class="footer-copy">© <span id="year"></span> Smart Solutions. All rights reserved.</p>
+    <p class="footer-copy">&copy; <span id="year"></span> Smart Solutions. All rights reserved.</p>
   </div>
 </footer>
 

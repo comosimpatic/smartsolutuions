@@ -17,7 +17,7 @@
 #critter-band {
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
-  margin-top: -3.5vw;   /* lift the whole SERVICES + critters composition higher */
+  margin-top: clamp(12px, 2vw, 34px);   /* sit clearly BELOW the page heading, not over it */
 }
 /* big, bold SERVICES wordmark behind the critters — now full-width, no clipping */
 .fcf-root .fcf-word {

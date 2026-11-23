@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playground — Smart Solutions</title>
+<meta name="description" content="A living catalogue of components we can build for your site — preview them, pick the ones you like, and we'll assemble your private build.">
+<link rel="icon" type="image/png" href="assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/work-deck.css">
+<link rel="stylesheet" href="css/chroma-reveal.css">
+<link rel="stylesheet" href="css/critter-band.css">
+<link rel="stylesheet" href="css/live-dash.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/playground.css">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/vercel-theme.css">
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="grid-overlay"></div>
+<header class="site-header" id="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">
+      <img class="logo-mark" src="assets/logo-mark.png" alt="Smart Solutions">
+      <span>Smart <em>Solutions</em></span>
+    </a>
+    <nav class="main-nav" id="main-nav">
+      <a href="services.html">Services</a>
+      <a href="playground.html" class="is-active" aria-current="page">Playground</a>
+      <a href="work.html">Work</a>
+      <a href="about.html">About</a>
+      <a href="studio.html">Pricing</a>
+      <a href="index.html#contact" class="nav-cta">Start a Project</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="page-hero pg-hero">
+    <div class="container">
+      <p class="section-label reveal">Playground</p>
+      <h1 class="section-title reveal">Components we can build for you</h1>
+      <p class="section-sub reveal">A living catalogue &mdash; browse real, running previews, filter by type, and pick the pieces you like. We assemble the ones you choose into your own private build.</p>
+    </div>
+  </section>
+
+  <section class="pg">
+    <div class="container">
+      <div class="pg-controls reveal">
+        <input type="search" id="pg-search" class="pg-search" placeholder="Search components&hellip;" aria-label="Search components">
+        <div class="pg-chips" id="pg-chips"></div>
+      </div>
+      <div class="pg-grid" id="pg-grid"></div>
+      <p class="pg-empty" id="pg-empty" hidden>No components match that search.</p>
+    </div>
+  </section>
+
+  <section class="page-cta">
+    <div class="container">
+      <h2 class="section-title reveal">Want a private preview?</h2>
+      <p class="section-sub reveal">Tell us which components you like and we'll send you a private link with a live, personalised preview of your future site &mdash; your colours, your text, your logo.</p>
+      <a href="index.html#contact" class="btn btn-primary reveal">Request a private preview <span aria-hidden="true">&rarr;</span></a>
+    </div>
+  </section>
+
+</main>
+
+<!-- full-size live preview modal -->
+<div class="pg-modal" id="pg-modal">
+  <div class="pg-modal-panel" role="dialog" aria-modal="true" aria-labelledby="pg-modal-title">
+    <div class="pg-modal-bar">
+      <div>
+        <span class="pg-cat" id="pg-modal-cat"></span>
+        <h3 id="pg-modal-title"></h3>
+      </div>
+      <div class="pg-modal-actions">
+        <a href="index.html#contact" id="pg-modal-request" class="btn btn-primary" style="padding:9px 18px;font-size:.85rem;">Request this</a>
+        <button class="pg-close" data-close aria-label="Close preview">&times;</button>
+      </div>
+    </div>
+    <div class="pg-tools">
+      <div class="pg-seg" id="pg-seg" role="group" aria-label="Preview width">
+        <button data-dev="desktop" class="is-active">Desktop</button>
+        <button data-dev="tablet">Tablet</button>
+        <button data-dev="mobile">Mobile</button>
+      </div>
+      <div class="pg-swatches" id="pg-swatches">
+        <span class="lbl">Accent</span>
+        <button class="pg-swatch is-active" data-color="#000000" style="background:#000000" aria-label="Black"></button>
+        <button class="pg-swatch" data-color="#1d4ed8" style="background:#1d4ed8" aria-label="Blue"></button>
+        <button class="pg-swatch" data-color="#0d9488" style="background:#0d9488" aria-label="Teal"></button>
+        <button class="pg-swatch" data-color="#e45f99" style="background:#e45f99" aria-label="Pink"></button>
+        <button class="pg-swatch" data-color="#f4a73b" style="background:#f4a73b" aria-label="Amber"></button>
+      </div>
+    </div>
+    <div class="pg-modal-stage" id="pg-modal-stage"></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <a href="index.html" class="logo">
+      <img class="logo-mark" src="assets/logo-mark.png" alt="Smart Solutions">
+      <span>Smart <em>Solutions</em></span>
+    </a>
+    <div class="footer-links">
+      <a href="mailto:smartsolutionssvg@gmail.com">smartsolutionssvg@gmail.com</a>
+      <a href="services.html">Services</a>
+      <a href="work.html">Work</a>
+      <a href="about.html">About</a>
+      <a href="studio.html">Pricing</a>
+      <a href="index.html#contact">Contact</a>
+    </div>
+    <p class="footer-copy">&copy; <span id="year"></span> Smart Solutions. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/playground.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="js/chroma-reveal.js"></script>
+</body>
+</html>

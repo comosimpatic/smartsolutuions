@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Smart Solutions</title>
+<meta name="description" content="Engineers first, consultants second. Senior-only teams, fixed-scope delivery, security built in — and people who answer the phone after launch.">
+<link rel="icon" type="image/png" href="assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/work-deck.css">
+<link rel="stylesheet" href="css/chroma-reveal.css">
+<link rel="stylesheet" href="css/critter-band.css">
+<link rel="stylesheet" href="css/live-dash.css">
+<link rel="stylesheet" href="css/pages.css">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/vercel-theme.css">
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="grid-overlay"></div>
+<header class="site-header" id="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">
+      <img class="logo-mark" src="assets/logo-mark.png" alt="Smart Solutions">
+      <span>Smart <em>Solutions</em></span>
+    </a>
+    <nav class="main-nav" id="main-nav">
+      <a href="services.html">Services</a>
+      <a href="playground.html">Playground</a>
+      <a href="work.html">Work</a>
+      <a href="about.html" class="is-active" aria-current="page">About</a>
+      <a href="studio.html">Pricing</a>
+      <a href="index.html#contact" class="nav-cta">Start a Project</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+<main id="top">
+
+  <section class="about about--page" id="about">
+    <div class="container about-inner">
+      <div class="about-text reveal">
+        <p class="section-label">Why Smart Solutions</p>
+        <h1 class="section-title">Engineers first. Consultants second.</h1>
+        <p class="section-sub" data-content-key="about_body">
+          We're a team of engineers, architects and strategists who believe the
+          best technology partners write code alongside you, not just slides
+          about it. No bloated teams, no jargon &mdash; just systems that work,
+          delivered by people who'll still answer the phone after launch.
+        </p>
+        <ul class="about-list">
+          <li>Senior-only engineering teams, no outsourced juniors</li>
+          <li>Fixed-scope delivery with weekly working demos</li>
+          <li>Security and scalability built in from day one</li>
+          <li>Direct access to your engineers &mdash; always</li>
+        </ul>
+      </div>
+      <div class="about-visual reveal" aria-hidden="true">
+        <div class="orbit-ring ring-1"></div>
+        <div class="orbit-ring ring-2"></div>
+        <div class="orbit-ring ring-3"></div>
+        <div class="orbit-core">SS</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <div class="container">
+      <p class="section-label reveal">Common questions</p>
+      <h2 class="section-title reveal">Frequently asked questions</h2>
+
+      <div class="faq-list">
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            How quickly can you start a project?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Most engagements kick off within one to two weeks of signing. We run a short discovery phase up front so the team starts with a clear scope instead of figuring it out mid-build.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            Do you work with early-stage startups, or only larger companies?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Both. We scope engagements to fit the team and budget in front of us &mdash; a startup's first production system looks different from an enterprise integration, and we plan for that up front.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            What does a fixed-scope engagement actually include?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>A defined set of deliverables, a timeline, and weekly working demos so you always know what's shipped and what's next &mdash; no open-ended hourly billing.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            Can you support an existing in-house engineering team, not just full builds?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Yes &mdash; a lot of our work is embedding alongside an existing team for a specific system, migration, or crunch period rather than owning the whole build.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            Is the phone/computer repair side connected to the consulting side?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Same company, separate teams. Repair is handled by certified technicians independent of the consulting engineers &mdash; see the <a href="repair.html" style="color:var(--accent); font-weight:600;">repair page</a> for pricing and turnaround.</p>
+          </div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">
+            What happens after launch &mdash; do you offer ongoing support?
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>We stay on to monitor, optimize and evolve the system as needed. The exact terms depend on the engagement and get scoped before launch, not after.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-cta">
+    <div class="container">
+      <h2 class="section-title reveal">Let's build what's next.</h2>
+      <p class="section-sub reveal">Tell us about your project &mdash; we typically reply within one business day.</p>
+      <a href="index.html#contact" class="btn btn-primary reveal">Start a Project <span aria-hidden="true">&rarr;</span></a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <a href="index.html" class="logo">
+      <img class="logo-mark" src="assets/logo-mark.png" alt="Smart Solutions">
+      <span>Smart <em>Solutions</em></span>
+    </a>
+    <div class="footer-links">
+      <a href="mailto:smartsolutionssvg@gmail.com">smartsolutionssvg@gmail.com</a>
+      <a href="services.html">Services</a>
+      <a href="work.html">Work</a>
+      <a href="about.html">About</a>
+      <a href="studio.html">Pricing</a>
+      <a href="index.html#contact">Contact</a>
+    </div>
+    <p class="footer-copy">&copy; <span id="year"></span> Smart Solutions. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/work-deck.js"></script>
+<script src="js/critter-bundle.js"></script>
+<script src="js/live-dash.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="js/chroma-reveal.js"></script>
+</body>
+</html>

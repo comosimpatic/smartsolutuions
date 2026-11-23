@@ -6,10 +6,10 @@
    Remove this stylesheet link to revert to the original brand theme.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-  --bg:             #fafafa;   /* page */
-  --bg-alt:         #f2f2f2;
+  --bg:             #ffffff;   /* page — pure white */
+  --bg-alt:         #ffffff;
   --surface:        #ffffff;   /* cards */
-  --surface-strong: #f5f5f5;
+  --surface-strong: #ffffff;
   --border:         #eaeaea;
   --text:           #000000;   /* foreground */
   --text-dim:       #666666;   /* muted foreground */
@@ -51,3 +51,8 @@ h1, h2, h3, h4, h5,
 
 /* the hero's gradient text -> solid black for the minimal look */
 .text-gradient { background: none !important; -webkit-text-fill-color: #000 !important; color: #000 !important; }
+
+/* clean, flat white background — no grid, no particle canvas, no tinted layers */
+.grid-overlay { display: none !important; }
+#bg-canvas { display: none !important; background: #ffffff !important; }
+body { background: #ffffff !important; }
