@@ -267,6 +267,11 @@ body.is-dragging { cursor: grabbing; user-select: none; }
 }
 .kora-form .kora-btn--solid { width: 100%; justify-content: center; margin-top: .4rem; }
 .kora-note { min-height: 1.3em; margin: .9rem 0 0; font-size: .88rem; color: #666; }
+.kora-note--ok  { color: #0a7c42; }
+.kora-note--err { color: #d12e2e; font-weight: 500; }
+
+/* submit button while the inquiry is in flight */
+.kora-btn[disabled] { opacity: .55; pointer-events: none; }
 
 /* ── dot navigation ────────────────────────────────────────────────────────*/
 .kora-dots {

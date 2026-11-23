@@ -229,19 +229,55 @@
   );
   counters.forEach((el) => counterObserver.observe(el));
 
-  /* ---------- Contact form (front-end only demo) ---------- */
+  /* ---------- Contact form -> /api/inquiries ---------- */
   const form = document.getElementById('contact-form');
   const formNote = document.getElementById('form-note');
   if (form) {
-    form.addEventListener('submit', (e) => {
+    const fieldValue = (id) => {
+      const el = document.getElementById(id);
+      return el ? el.value.trim() : '';
+    };
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      formNote.textContent = 'Thanks — your message has been noted. We\'ll be in touch shortly.';
-      form.reset();
+      const submitBtn = form.querySelector('button[type="submit"]');
+      formNote.className = 'kora-note';
+      formNote.textContent = 'Sending…';
+
+      const company = fieldValue('company');
+      const details = fieldValue('message');
+      const payload = {
+        name: fieldValue('name'),
+        email: fieldValue('email'),
+        // the inquiries table has no company column, so it rides along with the message
+        message: company ? 'Company: ' + company + '\n\n' + details : details,
+        product_name: fieldValue('service') || null,
+      };
+
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        const res = await fetch('/api/inquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not send your message');
+        formNote.textContent = "Thanks — we'll be in touch within one business day.";
+        formNote.classList.add('kora-note--ok');
+        form.reset();
+      } catch (err) {
+        formNote.textContent = err.message + '. You can also email smartsolutionssvg@gmail.com.';
+        formNote.classList.add('kora-note--err');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
     });
   }
 
   /* ---------- Particle network background ---------- */
   const canvas = document.getElementById('bg-canvas');
+  if (!canvas) return; // Kora homepage (index.html) has no particle canvas
   const ctx = canvas.getContext('2d');
   let width, height, particles;
   const PARTICLE_COUNT = 70;
