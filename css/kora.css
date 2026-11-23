@@ -50,10 +50,12 @@
 }
 
 .kora-page main { position: relative; z-index: 2; }
-/* every scene's content stays above the orb canvas */
+/* every scene's content stays above the orb canvas. NB: do not set `position`
+   on .kora-cue here — it is already absolute, and relative would drop it back
+   into the flex flow and park it at the row's end instead of bottom-left. */
 .kscene > .container,
-.kscene .kscene-body,
-.kscene .kora-cue { position: relative; z-index: 2; }
+.kscene .kscene-body { position: relative; z-index: 2; }
+.kscene .kora-cue { z-index: 2; }
 body.is-dragging { cursor: grabbing; user-select: none; }
 
 /* ── scenes ────────────────────────────────────────────────────────────────*/
@@ -372,8 +374,8 @@ body.is-dragging { cursor: grabbing; user-select: none; }
     padding: 36vh 0 4.5rem;
     align-items: flex-start;
   }
-  .kscene--hero { padding-top: 44vh; }
-  .kscene--contact { padding-top: 34vh; }
+  .kscene--hero { padding-top: 34vh; }
+  .kscene--contact { padding-top: 36vh; }
   .kora-h1 { font-size: clamp(1.95rem, 8.2vw, 2.5rem); }
   .kora-h2 { font-size: clamp(1.7rem, 7vw, 2.2rem); }
   .kscene--left .container,
@@ -383,17 +385,30 @@ body.is-dragging { cursor: grabbing; user-select: none; }
   .kscene--right .kscene-body,
   .kscene--hero .kscene-body { grid-column: 1; }
   .kora-stats { gap: 1.2rem 1.6rem; max-width: none; }
-  /* the two-viewport scene keeps its span on mobile; the top-band padding
-     moves onto the sticky container, since .kscene--tall itself has none */
-  .kscene--tall { padding: 0; }
-  .kscene--tall > .container {
-    padding: 36vh 0 4.5rem;
-    align-content: start;
-  }
+  /* Content scenes: the critter shrinks into a top corner on mobile (see
+     MOBILE keyframes in js/kora-critter.js), so the copy only needs a small
+     band kept clear instead of the hero's big one. */
+  .kscene--right,
+  .kscene--left { padding-top: 25vh; }
+
+  /* No sticky pinning on mobile. These lists are TALLER than a phone screen,
+     and a sticky box taller than the viewport pins with its overflow
+     unreachable — the last items could never be read. Let them scroll, and
+     size the section to its content so there is no dead space either. The
+     nav measures real geometry, so the critter's hold still works. */
+  .kscene--tall { min-height: 100vh; display: block; padding: 25vh 0 4.5rem; }
+  .kscene--tall > .container { position: static; min-height: 0; padding: 0; }
+
   .kora-form .row { grid-template-columns: 1fr; }
   .kora-dots { right: .7rem; gap: .75rem; }
   .kora-dot-label { display: none; }
-  .kora-footer { position: static; margin-top: 3rem; }
+  /* hero copy runs to the bottom of a phone screen — the cue would sit on the
+     stats, and scrolling needs no hint on touch anyway */
+  .kora-cue { display: none; }
+  /* .kscene is a flex container: a static footer would become a flex ITEM and
+     sit beside the form, overflowing the page sideways. Stack instead. */
+  .kscene--contact { display: block; }
+  .kora-footer { position: static; margin-top: 3rem; width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

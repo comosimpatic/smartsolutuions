@@ -256,10 +256,14 @@ function boot() {
   /* On narrow screens the critter owns the top band and the copy starts
      beneath it (see the <=860px rules in css/kora.css). */
   const MOBILE = [
-    { x: 0, y:  1.55, s: 0.42, rx:  0.00, rz:  0.00 },
-    { x: 0, y:  1.50, s: 0.40, rx:  0.12, rz: -0.14 },
-    { x: 0, y:  1.50, s: 0.40, rx: -0.12, rz:  0.14 },
-    { x: 0, y:  1.15, s: 0.26, rx:  0.00, rz:  0.00 },
+    // hero: the showpiece, centred in the top band
+    { x:  0.00, y: 1.55, s: 0.42, rx:  0.00, rz:  0.00 },
+    // content scenes: small, tucked into a top corner so the copy gets the
+    // full width — at hero size it would eat a third of every phone screen
+    { x:  0.55, y: 1.62, s: 0.24, rx:  0.12, rz: -0.14 },
+    { x: -0.55, y: 1.62, s: 0.24, rx: -0.12, rz:  0.14 },
+    // contact: back to centre, hovering above the form
+    { x:  0.00, y: 1.15, s: 0.26, rx:  0.00, rz:  0.00 },
   ];
   let KEYS = desktopKeys();
 
