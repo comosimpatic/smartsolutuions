@@ -1,0 +1,403 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Kora-style landing page — Smart Solutions
+   Pure-white treatment: Geist type, black ink, one glass orb. Loaded after
+   vercel-theme.css, so it inherits that theme's tokens.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── page shell ────────────────────────────────────────────────────────────*/
+.kora-page {
+  background: #fff;
+  color: #000;
+}
+/* NB: do NOT set overflow-x on <html> or <body> here. On <html> it makes the
+   root a scroll container; on <body> `clip` propagates to the viewport and
+   computes overflow-y to `clip` too, which stops the page scrolling entirely.
+   Nothing on this page overflows horizontally (the orb canvas is fixed at
+   100vw, scenes use min() widths), so no override is needed. */
+.kora-page .grid-overlay,
+.kora-page #bg-canvas { display: none !important; }
+
+/* the orb canvas sits behind everything, fixed to the viewport */
+#kora-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.1s ease .15s;
+}
+.kora-ready #kora-canvas { opacity: 1; }
+
+/* soft contact shadow so the glass sits on the white instead of floating */
+.kora-shadow {
+  position: fixed;
+  left: 50%;
+  top: 50%;                 /* JS offsets from centre so it tracks the critter */
+  width: min(40vw, 470px);
+  height: min(11vw, 128px);
+  z-index: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(50% 50% at 50% 50%,
+              rgba(10, 16, 30, .26) 0%,
+              rgba(10, 16, 30, .11) 45%,
+              rgba(10, 16, 30, 0) 72%);
+  filter: blur(14px);
+  opacity: 0;
+  transition: opacity .9s ease;
+}
+
+.kora-page main { position: relative; z-index: 2; }
+/* every scene's content stays above the orb canvas */
+.kscene > .container,
+.kscene .kscene-body,
+.kscene .kora-cue { position: relative; z-index: 2; }
+body.is-dragging { cursor: grabbing; user-select: none; }
+
+/* ── scenes ────────────────────────────────────────────────────────────────*/
+.kscene {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 7rem 0 4rem;
+}
+.kscene .container {
+  width: min(1180px, 92vw);
+  margin: 0 auto;
+}
+
+/* two-column scenes leave the middle clear for the orb */
+.kscene--right .container { display: grid; grid-template-columns: 1fr 1fr; }
+.kscene--right .kscene-body { grid-column: 2; }
+.kscene--left  .container { display: grid; grid-template-columns: 1fr 1fr; }
+.kscene--left  .kscene-body { grid-column: 1; }
+
+/* A scene that spans two viewports (data-span="2"): the section is twice as
+   tall so there is scroll to hold the critter still, and the content sticks
+   to the viewport for the whole span instead of scrolling away and leaving a
+   blank screen. Must come after the --left/--right rules to win on columns. */
+.kscene--tall {
+  min-height: 200vh;
+  display: block;
+  padding: 0;
+}
+.kscene--tall > .container {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  align-content: center;
+  padding: 7rem 0 4rem;
+}
+
+/* ── kinetic type ──────────────────────────────────────────────────────────*/
+.kora-page h1,
+.kora-page h2 {
+  font-family: "Geist", system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.042em;
+  line-height: .98;
+  margin: 0;
+  text-wrap: balance;
+}
+/* sized for the hero's left column, not a full-bleed page */
+.kora-h1 { font-size: clamp(2.3rem, 4.7vw, 4.3rem); }
+.kora-h2 { font-size: clamp(2rem, 4.4vw, 3.5rem); }
+
+[data-kinetic] { overflow: hidden; display: block; padding-bottom: .08em; }
+
+.kora-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 1.6rem;
+}
+.kora-eyebrow .pulse-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #1d4ed8;
+  box-shadow: 0 0 0 0 rgba(29, 78, 216, .55);
+  animation: kora-pulse 2.4s infinite;
+}
+@keyframes kora-pulse {
+  70%  { box-shadow: 0 0 0 11px rgba(29, 78, 216, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0); }
+}
+
+.kora-lede {
+  max-width: 46ch;
+  margin: 1.5rem 0 0;
+  font-size: clamp(1rem, 1.35vw, 1.17rem);
+  line-height: 1.6;
+  color: #666;
+}
+
+/* ── hero ──────────────────────────────────────────────────────────────────*/
+/* type sits in the left column; the orb travels in the clear right half */
+.kscene--hero { padding-bottom: 7rem; }
+.kscene--hero .container {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr);
+}
+.kscene--hero .kscene-body {
+  grid-column: 1;
+  position: relative;
+  z-index: 2;
+}
+.kora-actions {
+  display: flex;
+  gap: .8rem;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-top: 2.4rem;
+}
+
+.kora-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .78rem 1.4rem;
+  border-radius: 8px;
+  font: 500 .95rem/1 "Geist", system-ui, sans-serif;
+  text-decoration: none;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.kora-btn--solid { background: #000; color: #fff; border: 1px solid #000; }
+.kora-btn--solid:hover { background: #171717; transform: translateY(-1px); }
+.kora-btn--ghost { background: #fff; color: #000; border: 1px solid #eaeaea; }
+.kora-btn--ghost:hover { border-color: #000; transform: translateY(-1px); }
+
+/* stat row under the hero */
+.kora-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem clamp(1.5rem, 3vw, 2.6rem);
+  max-width: 440px;
+  margin: 3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.kora-stats dt {
+  font: 600 clamp(1.5rem, 2.6vw, 2.1rem)/1 "Geist", system-ui, sans-serif;
+  letter-spacing: -.03em;
+}
+.kora-stats dd {
+  margin: .35rem 0 0;
+  font-size: .76rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #8f8f8f;
+}
+
+/* ── capability / work lists ───────────────────────────────────────────────*/
+.kora-list { list-style: none; margin: 2.2rem 0 0; padding: 0; }
+.kora-list li {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  padding: .95rem 0;
+  border-top: 1px solid #eaeaea;
+  font-size: clamp(.98rem, 1.3vw, 1.1rem);
+}
+.kora-list li:last-child { border-bottom: 1px solid #eaeaea; }
+.kora-list .n {
+  font-variant-numeric: tabular-nums;
+  font-size: .72rem;
+  letter-spacing: .1em;
+  color: #8f8f8f;
+  min-width: 2.2rem;
+}
+.kora-list .d { color: #666; font-size: .92rem; }
+
+.kora-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  margin-top: 2rem;
+  font: 500 .95rem/1 "Geist", system-ui, sans-serif;
+  color: #000;
+  text-decoration: none;
+  border-bottom: 1px solid #000;
+  padding-bottom: .25rem;
+  transition: gap .18s ease;
+}
+.kora-link:hover { gap: .85rem; }
+
+/* ── contact scene ─────────────────────────────────────────────────────────*/
+/* top band is left clear for the critter, which hovers above the form */
+.kscene--contact { padding-top: 17.5rem; }
+.kscene--contact .container { max-width: 640px; text-align: center; }
+.kora-form { margin-top: 2.6rem; text-align: left; }
+.kora-form .row { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; }
+.kora-field { margin-bottom: 1rem; }
+.kora-field label {
+  display: block;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: .45rem;
+}
+.kora-field input,
+.kora-field select,
+.kora-field textarea {
+  width: 100%;
+  padding: .8rem .9rem;
+  font: 400 .97rem/1.4 "Geist", system-ui, sans-serif;
+  color: #000;
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+.kora-field input:focus,
+.kora-field select:focus,
+.kora-field textarea:focus {
+  outline: none;
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, .06);
+}
+.kora-form .kora-btn--solid { width: 100%; justify-content: center; margin-top: .4rem; }
+.kora-note { min-height: 1.3em; margin: .9rem 0 0; font-size: .88rem; color: #666; }
+
+/* ── dot navigation ────────────────────────────────────────────────────────*/
+.kora-dots {
+  position: fixed;
+  right: clamp(1rem, 2.4vw, 2.2rem);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: .95rem;
+  align-items: flex-end;
+}
+.kora-dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 1px solid #c8c8c8;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+.kora-dot:hover { border-color: #000; transform: scale(1.18); }
+.kora-dot.is-active { background: #000; border-color: #000; }
+.kora-dot-label {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-size: .68rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+.kora-dot:hover .kora-dot-label,
+.kora-dot.is-active .kora-dot-label { opacity: 1; }
+
+/* Under 1200px the dot labels are dropped so the rail is just the dots: it
+   leaves the critter room to sit clear of both the nav and the headline.
+   js/kora-critter.js rail() mirrors this breakpoint. */
+@media (max-width: 1200px) {
+  .kora-dot-label { display: none; }
+}
+
+/* ── scroll cue ────────────────────────────────────────────────────────────*/
+.kora-cue {
+  position: absolute;
+  left: 4vw;
+  bottom: 1.6rem;
+  margin: 0;
+  font-size: .68rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #8f8f8f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .6rem;
+  opacity: calc(1 - var(--kora-p, 0) * 2.4);
+}
+.kora-cue::after {
+  content: '';
+  width: 1px;
+  height: 34px;
+  background: linear-gradient(#c8c8c8, transparent);
+  animation: kora-cue 2.1s ease-in-out infinite;
+}
+@keyframes kora-cue {
+  0%, 100% { transform: scaleY(.45); transform-origin: top; opacity: .5; }
+  50%      { transform: scaleY(1);   transform-origin: top; opacity: 1; }
+}
+
+/* ── footer inside the last scene ──────────────────────────────────────────*/
+.kora-footer {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 1.5rem 0;
+  border-top: 1px solid #eaeaea;
+  background: #fff;
+}
+.kora-footer .inner {
+  width: min(1180px, 92vw);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  font-size: .85rem;
+  color: #8f8f8f;
+}
+.kora-footer a { color: #666; text-decoration: none; margin-left: 1.2rem; }
+.kora-footer a:hover { color: #000; }
+
+/* ── responsive ────────────────────────────────────────────────────────────*/
+@media (max-width: 860px) {
+  /* top band is reserved for the orb; copy starts below it */
+  .kscene {
+    padding: 36vh 0 4.5rem;
+    align-items: flex-start;
+  }
+  .kscene--hero { padding-top: 44vh; }
+  .kscene--contact { padding-top: 34vh; }
+  .kora-h1 { font-size: clamp(1.95rem, 8.2vw, 2.5rem); }
+  .kora-h2 { font-size: clamp(1.7rem, 7vw, 2.2rem); }
+  .kscene--left .container,
+  .kscene--right .container,
+  .kscene--hero .container { grid-template-columns: 1fr; }
+  .kscene--left .kscene-body,
+  .kscene--right .kscene-body,
+  .kscene--hero .kscene-body { grid-column: 1; }
+  .kora-stats { gap: 1.2rem 1.6rem; max-width: none; }
+  /* the two-viewport scene keeps its span on mobile; the top-band padding
+     moves onto the sticky container, since .kscene--tall itself has none */
+  .kscene--tall { padding: 0; }
+  .kscene--tall > .container {
+    padding: 36vh 0 4.5rem;
+    align-content: start;
+  }
+  .kora-form .row { grid-template-columns: 1fr; }
+  .kora-dots { right: .7rem; gap: .75rem; }
+  .kora-dot-label { display: none; }
+  .kora-footer { position: static; margin-top: 3rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kora-cue::after,
+  .kora-eyebrow .pulse-dot { animation: none; }
+  #kora-canvas { transition: none; }
+}

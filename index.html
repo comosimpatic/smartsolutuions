@@ -1,27 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="kora-page">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smart Solutions — Engineering the Next Digital Era</title>
 <meta name="description" content="Smart Solutions is a technology consulting firm delivering AI, cloud, automation and custom software solutions built for the future.">
 <link rel="icon" type="image/png" href="assets/logo-mark.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/work-deck.css">
-<link rel="stylesheet" href="css/chroma-reveal.css">
-<link rel="stylesheet" href="css/critter-band.css">
-<link rel="stylesheet" href="css/live-dash.css">
-<link rel="stylesheet" href="css/pages.css">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/chroma-reveal.css">
 <link rel="stylesheet" href="css/vercel-theme.css">
+<link rel="stylesheet" href="css/kora.css">
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
+  }
+}
+</script>
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
-<div class="grid-overlay"></div>
+<!-- the glass mark, fixed behind the page -->
+<canvas id="kora-canvas" aria-hidden="true"></canvas>
+<div class="kora-shadow" aria-hidden="true"></div>
+
 <header class="site-header" id="site-header">
   <div class="container header-inner">
     <a href="index.html" class="logo">
@@ -34,115 +44,111 @@
       <a href="work.html">Work</a>
       <a href="about.html">About</a>
       <a href="studio.html">Pricing</a>
-      <a href="index.html#contact" class="nav-cta">Start a Project</a>
+      <a href="#contact" class="nav-cta">Start a Project</a>
     </nav>
     <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
   </div>
 </header>
+
+<nav class="kora-dots" aria-label="Page sections"></nav>
+
 <main id="top">
 
-  <section class="hero">
-    <video class="hero-bg-video" autoplay muted loop playsinline aria-hidden="true">
-      <source src="media/hero-bg.mp4" type="video/mp4">
-    </video>
-    <div class="hero-video-scrim"></div>
-    <div class="container hero-inner">
-      <div class="eyebrow reveal">
-        <span class="pulse-dot"></span>
-        Now onboarding partners for 2026
-      </div>
-      <h1 class="reveal">
-        Building the <span class="text-gradient">intelligent systems</span><br>
-        that run tomorrow's business.
-      </h1>
-      <div class="hero-actions reveal">
-        <a href="index.html#contact" class="btn btn-primary">Start a Project <span aria-hidden="true">&rarr;</span></a>
-        <a href="services.html" class="btn btn-ghost">Explore Services</a>
-      </div>
-      <dl class="hero-stats reveal">
-        <div><dt data-count="120">0</dt><dd>Projects Delivered</dd></div>
-        <div><dt data-count="98">0</dt><dd>% Client Retention</dd></div>
-        <div><dt data-count="24">0</dt><dd>/7 Systems Monitored</dd></div>
-        <div><dt data-count="14">0</dt><dd>Countries Served</dd></div>
-      </dl>
-    </div>
-  </section>
-
-  <section class="logo-strip">
+  <!-- ── 1 · hero ─────────────────────────────────────────────────────── -->
+  <section class="kscene kscene--hero" id="s-intro" data-label="Intro">
     <div class="container">
-      <p class="section-label">Trusted by forward-thinking teams</p>
-      <div class="logo-track">
-        <span>NORTHWIND</span><span>VERTEX LABS</span><span>ORBITAL</span>
-        <span>HELIX GROUP</span><span>QUANTA</span><span>ATLAS DYNAMICS</span>
-        <span>NORTHWIND</span><span>VERTEX LABS</span><span>ORBITAL</span>
-        <span>HELIX GROUP</span><span>QUANTA</span><span>ATLAS DYNAMICS</span>
+      <div class="kscene-body">
+        <p class="kora-eyebrow"><span class="pulse-dot"></span> Now onboarding partners for 2026</p>
+        <h1 class="kora-h1">
+          <span data-kinetic>Building the intelligent</span>
+          <span data-kinetic>systems that run</span>
+          <span data-kinetic>tomorrow's business.</span>
+        </h1>
+        <p class="kora-lede">
+          A technology studio in St. Vincent &amp; the Grenadines, building AI, cloud,
+          automation and custom software for teams across the Caribbean and beyond.
+        </p>
+        <div class="kora-actions">
+          <a href="#contact" class="kora-btn kora-btn--solid">Start a Project <span aria-hidden="true">&rarr;</span></a>
+          <a href="services.html" class="kora-btn kora-btn--ghost">Explore Services</a>
+        </div>
+        <dl class="kora-stats">
+          <div><dt data-count="120">0</dt><dd>Projects Delivered</dd></div>
+          <div><dt data-count="98">0</dt><dd>% Client Retention</dd></div>
+          <div><dt data-count="24">0</dt><dd>/7 Systems Monitored</dd></div>
+          <div><dt data-count="14">0</dt><dd>Countries Served</dd></div>
+        </dl>
       </div>
     </div>
+    <p class="kora-cue">Scroll</p>
   </section>
 
-  <section class="page-teasers">
+  <!-- ── 2 · capability (orb moves left) ──────────────────────────────── -->
+  <section class="kscene kscene--right kscene--tall" id="s-capability" data-label="Capability" data-span="2">
     <div class="container">
-      <p class="section-label reveal">Explore</p>
-      <h2 class="section-title reveal">Everything we do, one click away</h2>
-      <div class="teaser-grid">
-        <a class="teaser-card reveal" href="services.html">
-          <span class="teaser-icon" aria-hidden="true">&#9671;</span>
-          <h3>Services</h3>
-          <p>AI, cloud, custom software, security, data, marketing &amp; device repair &mdash; one team, end to end.</p>
-          <span class="teaser-go">Explore services <span aria-hidden="true">&rarr;</span></span>
-        </a>
-        <a class="teaser-card reveal" href="work.html">
-          <span class="teaser-icon" aria-hidden="true">&#9636;</span>
-          <h3>Work</h3>
-          <p>Real systems we've shipped and keep running for clients across the Caribbean and beyond.</p>
-          <span class="teaser-go">See the work <span aria-hidden="true">&rarr;</span></span>
-        </a>
-        <a class="teaser-card reveal" href="playground.html">
-          <span class="teaser-icon" aria-hidden="true">&#9707;</span>
-          <h3>Playground</h3>
-          <p>A space to explore, preview and play with ideas &mdash; more coming soon.</p>
-          <span class="teaser-go">Open the playground <span aria-hidden="true">&rarr;</span></span>
-        </a>
-        <a class="teaser-card reveal" href="about.html">
-          <span class="teaser-icon" aria-hidden="true">&#9673;</span>
-          <h3>About</h3>
-          <p>Engineers first, consultants second. The people who'll still answer the phone after launch.</p>
-          <span class="teaser-go">Meet the team <span aria-hidden="true">&rarr;</span></span>
-        </a>
-        <a class="teaser-card reveal teaser-card--wide" href="studio.html">
-          <span class="teaser-icon" aria-hidden="true">&#9670;</span>
-          <h3>Pricing &amp; Studio</h3>
-          <p>Build your package, pick your features and watch your price update live &mdash; a feel for your future site before you commit.</p>
-          <span class="teaser-go">Open the studio <span aria-hidden="true">&rarr;</span></span>
-        </a>
+      <div class="kscene-body">
+        <p class="kora-eyebrow">What we do</p>
+        <h2 class="kora-h2">
+          <span data-kinetic>One team,</span>
+          <span data-kinetic>end to end.</span>
+        </h2>
+        <ul class="kora-list">
+          <li><span class="n">01</span><span><strong>AI &amp; Automation</strong><br><span class="d">Agents, workflows and systems that do the repetitive work.</span></span></li>
+          <li><span class="n">02</span><span><strong>Cloud &amp; Infrastructure</strong><br><span class="d">Deployed, monitored and kept running — not handed over and forgotten.</span></span></li>
+          <li><span class="n">03</span><span><strong>Custom Software</strong><br><span class="d">Web apps, PWAs and internal tools built around how you actually work.</span></span></li>
+          <li><span class="n">04</span><span><strong>Data &amp; Security</strong><br><span class="d">Analytics you can act on, and the hardening to keep it yours.</span></span></li>
+          <li><span class="n">05</span><span><strong>Phone &amp; Computer Repair</strong><br><span class="d">Screens, batteries, ports and boards — walk-in service in Kingstown.</span></span></li>
+        </ul>
+        <a class="kora-link" href="services.html">All services <span aria-hidden="true">&rarr;</span></a>
       </div>
     </div>
   </section>
 
-  <section class="contact" id="contact">
-    <div class="container contact-inner">
-      <p class="section-label reveal">Get in touch</p>
-      <h2 class="section-title reveal">Let's build what's next.</h2>
-      <p class="section-sub reveal">Tell us about your project &mdash; we typically reply within one business day.</p>
+  <!-- ── 3 · work (orb moves right) ───────────────────────────────────── -->
+  <section class="kscene kscene--left kscene--tall" id="s-work" data-label="Work" data-span="2">
+    <div class="container">
+      <div class="kscene-body">
+        <p class="kora-eyebrow">Selected work</p>
+        <h2 class="kora-h2">
+          <span data-kinetic>Systems we shipped</span>
+          <span data-kinetic>and still run.</span>
+        </h2>
+        <ul class="kora-list">
+          <li><span class="n">01</span><span><strong>Freight &amp; Logistics Platform</strong><br><span class="d">Quoting, tracking and client portal for a Caribbean freight forwarder.</span></span></li>
+          <li><span class="n">02</span><span><strong>Retail &amp; Repair Operations</strong><br><span class="d">Inventory, parts catalogue, sales and receipts in one system.</span></span></li>
+          <li><span class="n">03</span><span><strong>AI Back-Office</strong><br><span class="d">Nightly agents that handle reporting and review queues unattended.</span></span></li>
+          <li><span class="n">04</span><span><strong>Events &amp; Packages</strong><br><span class="d">Self-serve package builders with live pricing and deposits.</span></span></li>
+        </ul>
+        <a class="kora-link" href="work.html">See the work <span aria-hidden="true">&rarr;</span></a>
+      </div>
+    </div>
+  </section>
 
-      <form class="contact-form reveal" id="contact-form">
-        <div class="form-row">
-          <div class="form-field">
+  <!-- ── 4 · contact (orb turns iridescent) ───────────────────────────── -->
+  <section class="kscene kscene--contact" id="contact" data-label="Contact">
+    <div class="container">
+      <p class="kora-eyebrow">Get in touch</p>
+      <h2 class="kora-h2"><span data-kinetic>Let's build what's next.</span></h2>
+      <p class="kora-lede">Tell us about your project — we typically reply within one business day.</p>
+
+      <form class="kora-form" id="contact-form">
+        <div class="row">
+          <div class="kora-field">
             <label for="name">Name</label>
             <input type="text" id="name" name="name" required>
           </div>
-          <div class="form-field">
+          <div class="kora-field">
             <label for="email">Email</label>
             <input type="email" id="email" name="email" required>
           </div>
         </div>
-        <div class="form-field">
+        <div class="kora-field">
           <label for="company">Company</label>
           <input type="text" id="company" name="company">
         </div>
-        <div class="form-field">
+        <div class="kora-field">
           <label for="service">Service interested in</label>
           <select id="service" name="service">
             <option value="">Select a service&hellip;</option>
@@ -158,42 +164,36 @@
             <option>Other</option>
           </select>
         </div>
-        <div class="form-field">
+        <div class="kora-field">
           <label for="message">Project details</label>
           <textarea id="message" name="message" rows="4" required></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Send Message <span aria-hidden="true">&rarr;</span></button>
-        <p class="form-note" id="form-note"></p>
+        <button type="submit" class="kora-btn kora-btn--solid">Send Message <span aria-hidden="true">&rarr;</span></button>
+        <p class="kora-note" id="form-note"></p>
       </form>
     </div>
+
+    <footer class="kora-footer">
+      <div class="inner">
+        <p>&copy; <span id="year"></span> Smart Solutions. All rights reserved.</p>
+        <p>
+          <a href="mailto:smartsolutionssvg@gmail.com">smartsolutionssvg@gmail.com</a>
+          <a href="services.html">Services</a>
+          <a href="work.html">Work</a>
+          <a href="about.html">About</a>
+          <a href="studio.html">Pricing</a>
+        </p>
+      </div>
+    </footer>
   </section>
 
 </main>
 
-<footer class="site-footer">
-  <div class="container footer-inner">
-    <a href="index.html" class="logo">
-      <img class="logo-mark" src="assets/logo-mark.png" alt="Smart Solutions">
-      <span>Smart <em>Solutions</em></span>
-    </a>
-    <div class="footer-links">
-      <a href="mailto:smartsolutionssvg@gmail.com">smartsolutionssvg@gmail.com</a>
-      <a href="services.html">Services</a>
-      <a href="work.html">Work</a>
-      <a href="about.html">About</a>
-      <a href="studio.html">Pricing</a>
-      <a href="index.html#contact">Contact</a>
-    </div>
-    <p class="footer-copy">&copy; <span id="year"></span> Smart Solutions. All rights reserved.</p>
-  </div>
-</footer>
-
 <script src="js/main.js"></script>
-<script src="js/work-deck.js"></script>
-<script src="js/critter-bundle.js"></script>
-<script src="js/live-dash.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="js/chroma-reveal.js"></script>
+<script src="js/kora-nav.js"></script>
+<script type="module" src="js/kora-critter.js"></script>
 </body>
 </html>
